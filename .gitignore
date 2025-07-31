@@ -1,0 +1,12 @@
+#all executables
+*.x
+
+# logs
+*.log
+
+#cmake byproducts
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+
