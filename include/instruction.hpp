@@ -1,6 +1,11 @@
 #pragma once
 
 
+#include <cstdint>
+#include <string>
+
+class Cpu;
+
 struct Instruction
 {
     std::string name;
@@ -9,4 +14,6 @@ struct Instruction
     uint8_t nCycles = 0;
 };
 
-struct Instruction instructionLookupTable[256];
+extern struct Instruction instructionLookupTable[256];
+
+void initInstrLookupTable();

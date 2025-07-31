@@ -6,6 +6,7 @@
 class Bus
 {
 public:
+    static const uint16_t INTERNAL_RAM_SIZE = 0x800;
     Bus();
     Cpu* cpu() { return m_cpu; }
 
@@ -17,7 +18,7 @@ public:
 
 private:
 
-    //uint8_t ram[RAM_SIZE];
+    uint8_t internalRam[INTERNAL_RAM_SIZE];
 
     Cartridge* m_cart;
     Cpu* m_cpu;

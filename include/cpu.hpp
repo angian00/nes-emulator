@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <bitset>
 
+#include "instruction.hpp"
+
 class Bus;
 
 
@@ -57,67 +59,67 @@ public:
     uint8_t AddrZPY();
 
     //opcodes
-    uint8_t OpADC(); //TODO
-    uint8_t OpAND(); //TODO
-    uint8_t OpASL(); //TODO
+    uint8_t OpADC();
+    uint8_t OpAND();
+    uint8_t OpASL();
     uint8_t OpBCC();
     uint8_t OpBCS();
     uint8_t OpBEQ();
-    uint8_t OpBIT(); //TODO
+    uint8_t OpBIT();
     uint8_t OpBMI();
     uint8_t OpBNE();
     uint8_t OpBPL();
-    uint8_t OpBRK(); //TODO
+    uint8_t OpBRK();
     uint8_t OpBVC();
     uint8_t OpBVS();
     uint8_t OpCLC();
     uint8_t OpCLD();
     uint8_t OpCLI();
     uint8_t OpCLV();
-    uint8_t OpCMP(); //TODO
-    uint8_t OpCPX(); //TODO
-    uint8_t OpCPY(); //TODO
-    uint8_t OpDEC(); //TODO
-    uint8_t OpDEX(); //TODO
-    uint8_t OpDEY(); //TODO
-    uint8_t OpEOR(); //TODO
-    uint8_t OpINC(); //TODO
-    uint8_t OpINX(); //TODO
-    uint8_t OpINY(); //TODO
-    uint8_t OpJMP(); //TODO
-    uint8_t OpJSR(); //TODO
+    uint8_t OpCMP();
+    uint8_t OpCPX();
+    uint8_t OpCPY();
+    uint8_t OpDEC();
+    uint8_t OpDEX();
+    uint8_t OpDEY();
+    uint8_t OpEOR();
+    uint8_t OpINC();
+    uint8_t OpINX();
+    uint8_t OpINY();
+    uint8_t OpJMP();
+    uint8_t OpJSR();
     uint8_t OpLDA();
     uint8_t OpLDX();
     uint8_t OpLDY();
-    uint8_t OpLSR(); //TODO
-    uint8_t OpNOP(); //TODO
-    uint8_t OpORA(); //TODO
-    uint8_t OpPHA(); //TODO
-    uint8_t OpPHP(); //TODO
-    uint8_t OpPLA(); //TODO
-    uint8_t OpPLP(); //TODO
-    uint8_t OpROL(); //TODO
-    uint8_t OpROR(); //TODO
-    uint8_t OpRTI(); //TODO
-    uint8_t OpRTS(); //TODO
-    uint8_t OpSBC(); //TODO
+    uint8_t OpLSR();
+    uint8_t OpNOP();
+    uint8_t OpORA();
+    uint8_t OpPHA();
+    uint8_t OpPHP();
+    uint8_t OpPLA();
+    uint8_t OpPLP();
+    uint8_t OpROL();
+    uint8_t OpROR();
+    uint8_t OpRTI();
+    uint8_t OpRTS();
+    uint8_t OpSBC();
     uint8_t OpSEC();
     uint8_t OpSED();
     uint8_t OpSEI();
     uint8_t OpSTA();
     uint8_t OpSTX();
     uint8_t OpSTY();
-    uint8_t OpTAX(); //TODO
-    uint8_t OpTAY(); //TODO
-    uint8_t OpTSX(); //TODO
-    uint8_t OpTXA(); //TODO
-    uint8_t OpTXS(); //TODO
-    uint8_t OpTYA(); //TODO
+    uint8_t OpTAX();
+    uint8_t OpTAY();
+    uint8_t OpTSX();
+    uint8_t OpTXA();
+    uint8_t OpTXS();
+    uint8_t OpTYA();
 
 
 private:
     Bus* m_bus;
-
+    
     // registers
     uint8_t   A;  // Accumulator
     uint8_t   X;  // Index Register X
@@ -125,12 +127,12 @@ private:
     uint8_t  SP;  // Stack Pointer: 8-bit offset to be added to $0100
     uint16_t PC;  // Program Counter
     uint8_t   P;  // Processor status
-
+    
     // other state
-    uint8_t fetched;
-    uint8_t opcode; //TODO
-    uint8_t waitCycles;
+    uint8_t nWaitCycles;
     uint16_t targetAddress;
+    uint32_t nProcessedInstr;
+    uint8_t (Cpu::*m_currAddrMode)(void);
 
     bool hasFlag(FlagIndex flagIndex);
     void setFlag(FlagIndex flagIndex, bool value);
@@ -138,9 +140,8 @@ private:
     
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
-    uint8_t readStack(uint8_t spRel);
-    void writeStack(uint8_t spRel, uint8_t value);
+    void pushStack(uint8_t value);
+    uint8_t popStack();
 
-    void initInstrLookupTable();
-
+    //void initInstrLookupTable();
 };

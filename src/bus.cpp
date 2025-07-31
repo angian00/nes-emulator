@@ -77,7 +77,8 @@ uint8_t Bus::read(uint16_t addr)
         return 0x00;
     }
 
-    throw std::runtime_error(std::format("read access to unimplemented memory area; addr=0x{:02X}", addr));
+    addr = mapInternalRam(addr);
+    return internalRam[addr];
 }
 
 void Bus::write(uint16_t addr, uint8_t data)
@@ -104,7 +105,8 @@ void Bus::write(uint16_t addr, uint8_t data)
         return;
     }
 
-    throw std::runtime_error(std::format("write access to unimplemented memory area; addr=0x{:02X}", addr));
+    addr = mapInternalRam(addr);
+    internalRam[addr] = data;
 }
 
 
