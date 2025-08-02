@@ -13,8 +13,14 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
 set(MAIN_SOURCES
     src/bus.cpp
     src/cartridge.cpp
-    src/cpu.cpp
     src/instruction.cpp
+    src/cpu.cpp
+    src/cpu_opcodes.cpp
+    src/cpu_addr_modes.cpp
+    src/ppu.cpp
+    src/palette.cpp
+    src/display.cpp
+    src/keyboard.cpp
     src/emulator.cpp
 )
 
@@ -41,7 +47,7 @@ set_property(TARGET ${VIEWER_EXE} PROPERTY CXX_STANDARD 23)
 # Add SDL2 library
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
-#target_link_libraries(${PROJECT_NAME}  ${SDL2_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}  ${SDL2_LIBRARIES})
 target_link_libraries(${VIEWER_EXE}  ${SDL2_LIBRARIES})
 
 # Add SDL2_image library

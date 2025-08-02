@@ -1,6 +1,6 @@
 #include "cartridge.hpp"
 
-#include <iostream>
+#include <cassert>
 #include <print>
 #include <filesystem>
 #include <stdexcept>
@@ -26,13 +26,15 @@ std::bitset<8> Cartridge::flags7() { return std::bitset<8>(m_rawData[7]); }
 bool Cartridge::hasTrainer() { return (flags6().test(2)); }
 
 
-uint8_t Cartridge::prgData(uint8_t iBlock, uint16_t addr)
+const uint8_t Cartridge::prgData(uint8_t iBlock, uint16_t addr)
 {
+    assert(addr < KBYTES_16);
     return *(m_progData + iBlock*KBYTES_16 + addr);
 }
 
-uint8_t Cartridge::chrData(uint8_t iBlock, uint16_t addr)
+const uint8_t Cartridge::chrData(uint8_t iBlock, uint16_t addr)
 {
+    assert(addr < KBYTES_8);
     return *(m_charData + iBlock*KBYTES_8 + addr);
 }
 

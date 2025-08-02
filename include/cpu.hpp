@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <bitset>
 
 #include "instruction.hpp"
 
@@ -142,6 +141,4 @@ private:
     void write(uint16_t addr, uint8_t value);
     void pushStack(uint8_t value);
     uint8_t popStack();
-
-    //void initInstrLookupTable();
 };

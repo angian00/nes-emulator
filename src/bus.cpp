@@ -30,14 +30,17 @@
 
 
 uint16_t mapInternalRam(uint16_t addr);
-uint16_t mapPPURegister(uint16_t addr);
 uint16_t mapCartridgeRom(uint16_t addr);
+Ppu::Register mapPPURegister(uint16_t addr);
 
 
 Bus::Bus()
 {
     m_cpu = new Cpu();
     m_cpu->connect(this);
+
+    m_ppu = new Ppu();
+    m_ppu->connect(this);
 }
 
 void Bus::insertCartridge(Cartridge* cart)
@@ -48,6 +51,7 @@ void Bus::insertCartridge(Cartridge* cart)
 void Bus::reset()
 {
     m_cpu->reset();
+    m_ppu->reset();
 }
 
 
@@ -55,9 +59,9 @@ uint8_t Bus::read(uint16_t addr)
 {
     if (addr >= 0x8000)
     {
-        static const uint8_t iProgBlock = 0; //TODO: support prog block switching
+        static const uint8_t iPrgBlock = 0; //TODO: support prg block switching
         addr = mapCartridgeRom(addr);
-        return m_cart->prgData(iProgBlock, addr);
+        return m_cart->prgData(iPrgBlock, addr);
     }
 
     if (addr >= 0x6000)
@@ -71,17 +75,16 @@ uint8_t Bus::read(uint16_t addr)
 
     if (addr >= 0x2000)
     {
-        //TODO: NES PPU registers
-        // addr = mapPPURegister(addr);
-        // writePPURegisters(addr);
-        return 0x00;
+        //NES PPU registers
+        return m_ppu->readRegister(mapPPURegister(addr));
     }
 
     addr = mapInternalRam(addr);
-    return internalRam[addr];
+    return m_internalRam[addr];
 }
 
-void Bus::write(uint16_t addr, uint8_t data)
+
+void Bus::write(uint16_t addr, uint8_t value)
 {
     if (addr >= 0x8000)
     {
@@ -99,14 +102,25 @@ void Bus::write(uint16_t addr, uint8_t data)
 
     if (addr >= 0x2000)
     {
-        //TODO: NES PPU registers
-        // addr = mapPPURegister(addr);
-        // writePPURegisters(addr);
+        //NES PPU registers
+        m_ppu->writeRegister(mapPPURegister(addr), value);
         return;
     }
 
     addr = mapInternalRam(addr);
-    internalRam[addr] = data;
+    m_internalRam[addr] = value;
+}
+
+
+uint8_t Bus::readChr(uint16_t addr)
+{
+    static const uint8_t iChrBlock = 0; //TODO: support chr block switching
+    // return m_cart->chrData(iChrBlock, addr);
+    uint8_t value = m_cart->chrData(iChrBlock, addr);
+
+    std::println("Bus::readChr(0x{:04X})=[0x{:02X}]", addr, value);
+    return value;
+
 }
 
 
@@ -116,9 +130,9 @@ uint16_t mapInternalRam(uint16_t addr)
     return (addr % 0x0800);
 }
 
-uint16_t mapPPURegister(uint16_t addr)
+Ppu::Register mapPPURegister(uint16_t addr)
 {
-    return (addr % 0x0008);
+    return ((Ppu::Register)(addr % 0x0008));
 }
 
 

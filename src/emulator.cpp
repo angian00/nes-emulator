@@ -1,7 +1,9 @@
 #include <print>
 
-#include "bus.hpp"
 #include "cartridge.hpp"
+#include "display.hpp"
+#include "keyboard.hpp"
+#include "bus.hpp"
 
 
 int main(int argc, char* argv[])
@@ -12,7 +14,6 @@ int main(int argc, char* argv[])
         std::println("!! Missing ROM path");
         exit(1);
     }
-
 
     Cartridge* cart;
     try {
@@ -28,20 +29,45 @@ int main(int argc, char* argv[])
     bus->insertCartridge(cart);
     bus->reset();
 
-    // SDL init (video, input)
 
+    Display* display = new Display();
+    auto sdlOk = display->initSdl();
+    if (!sdlOk) {
+        std::println("!! Error initializing SDL");
+        display->shutdownSdl();
+        return 1;
+    }
+
+    Keyboard* keyboard = new Keyboard();
+
+
+    //initial wait
+    for (auto i=0; i < 5e6; i++)
+    {
+        bus->cpu()->clock();
+    }
+
+    bus->ppu()->testNameTables();
+    
     // Main loop
     bool running = true;
     while (running) {
-    //     //handleInput();
-
-    //     // PPU clock is 3x CPU clock
-    //     // for (int i=0; i < 3; ++i)
-    //     //     bus.ppu.tick();
-
+        //PPU clock is 3x CPU clock
+        for (int i=0; i < 3; ++i)
+            bus->ppu()->clock();
+        
         bus->cpu()->clock();
-    //     // if (bus.ppu.frameReady()) {
-    //     //     renderFrame();
-    //     // }
+
+        if (bus->ppu()->isFrameComplete()) {
+            display->render(bus->ppu()->pixels());
+            bus->ppu()->clearFrameComplete();
+        }
+
+        running = keyboard->handleEvents();
+        if (!running)
+            std::println("Got SDL quit");
     }
+
+    display->shutdownSdl();
+    return 0;
 }

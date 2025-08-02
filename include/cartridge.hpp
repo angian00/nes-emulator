@@ -14,8 +14,8 @@ public:
     std::string const filename() { return m_filename; };
     uint8_t nProgBlocks();
     uint8_t nCharBlocks();
-    uint8_t prgData(uint8_t iBlock, uint16_t addr);
-    uint8_t chrData(uint8_t iBlock, uint16_t addr);
+    const uint8_t prgData(uint8_t iBlock, uint16_t addr);
+    const uint8_t chrData(uint8_t iBlock, uint16_t addr);
 
     void printDiagnostics();
     
