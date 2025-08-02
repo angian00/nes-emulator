@@ -31,6 +31,11 @@ uint8_t Cartridge::prgData(uint8_t iBlock, uint16_t addr)
     return *(m_progData + iBlock*KBYTES_16 + addr);
 }
 
+uint8_t Cartridge::chrData(uint8_t iBlock, uint16_t addr)
+{
+    return *(m_charData + iBlock*KBYTES_8 + addr);
+}
+
 
 
 bool Cartridge::load(const char* filename) {
