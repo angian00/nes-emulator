@@ -115,12 +115,11 @@ void Bus::write(uint16_t addr, uint8_t value)
 uint8_t Bus::readChr(uint16_t addr)
 {
     static const uint8_t iChrBlock = 0; //TODO: support chr block switching
-    // return m_cart->chrData(iChrBlock, addr);
-    uint8_t value = m_cart->chrData(iChrBlock, addr);
+    return m_cart->chrData(iChrBlock, addr);
 
-    std::println("Bus::readChr(0x{:04X})=[0x{:02X}]", addr, value);
-    return value;
-
+    //uint8_t value = m_cart->chrData(iChrBlock, addr);
+    //std::println("Bus::readChr(0x{:04X})=[0x{:02X}]", addr, value);
+    //return value;
 }
 
 

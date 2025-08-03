@@ -1,6 +1,7 @@
 #include "ppu.hpp"
 
 #include "bus.hpp"
+#include "bit_operations.hpp"
 
 #include <print>
 #include <cstring>
@@ -39,12 +40,59 @@ void Ppu::reset()
 
 uint8_t Ppu::readRegister(Register reg)
 {
+    // side-effects on internal registers
+    // see https://www.nesdev.org/wiki/PPU_scrolling#Summary
+    if (reg == Register::PPUSTATUS)
+            m_internalRegisterW = 0x00;
+
     return m_registers[reg];
 }
 
 void Ppu::writeRegister(Register reg, uint8_t value)
 {
     m_registers[reg] = value;
+
+    // side-effects on internal registers
+    // see https://www.nesdev.org/wiki/PPU_scrolling#Summary
+    if (reg == Register::PPUCTRL)
+    {
+        assignBits(&m_internalRegisterT, value, 10, 0, 2);
+    }
+    else if (reg == Register::PPUSCROLL)
+    {
+        if (m_internalRegisterW == 0x00)
+        {
+            //first write
+            assignBits(&m_internalRegisterT, value, 0, 3, 5);
+            m_internalRegisterX = value & 0x07;
+            m_internalRegisterW = 0x01;
+        }
+        else
+        {
+            //second write
+            assignBits(&m_internalRegisterT, value, 12, 0, 3);
+            assignBits(&m_internalRegisterT, value, 5, 3, 3);
+            assignBits(&m_internalRegisterT, value, 8, 6, 2);
+            m_internalRegisterW = 0x00;
+        }
+    }
+    else if (reg == Register::PPUADDR)
+    {
+        if (m_internalRegisterW == 0x00)
+        {
+            //first write
+            assignBits(&m_internalRegisterT, value, 8, 0, 6);
+            m_internalRegisterT &= ~(1 << 14); //clear Z bit            
+            m_internalRegisterW = 0x01;
+        }
+        else
+        {
+            //second write
+            assignBits(&m_internalRegisterT, value, 0, 0, 8);
+            m_internalRegisterV = m_internalRegisterT;
+            m_internalRegisterW = 0x00;
+        }
+    }
 }
 
 
@@ -181,8 +229,13 @@ void Ppu::clock()
         //     m_bus->cpu()->requestNMI();
     }
 
+    if (m_dot > 0 && m_dot <= 256)
+        renderPixel();
+    
     if ((m_dot % 8) == 0)
         incrementCoarseX();
+    if (m_dot == 256)
+        incrementY();
 
     m_dot++;
 
@@ -199,54 +252,54 @@ void Ppu::clock()
 
 
 
-void Ppu::testNameTables()
-{
-    uint16_t attrTableIndex =  0x00;
+// void Ppu::testNameTables()
+// {
+//     uint16_t attrTableIndex =  0x00;
 
-    static const int iNameTable = 0;
-    uint16_t startNameTable = START_NAME_TABLES + iNameTable * NAME_TABLE_SIZE;
+//     static const int iNameTable = 0;
+//     uint16_t startNameTable = START_NAME_TABLES + iNameTable * NAME_TABLE_SIZE;
 
-    std::println("testNameTables()");
+//     std::println("testNameTables()");
 
-    uint8_t attributes = read(startNameTable + ATTR_TABLE_OFFSET + attrTableIndex);
-    std::println("attributes={:02X}", attributes);
-    for (uint8_t xTile=0; xTile < wTiles; xTile++)
-    {
-        std::println("xTile loop: ({})", xTile);
+//     uint8_t attributes = read(startNameTable + ATTR_TABLE_OFFSET + attrTableIndex);
+//     std::println("attributes={:02X}", attributes);
+//     for (uint8_t xTile=0; xTile < wTiles; xTile++)
+//     {
+//         std::println("xTile loop: ({})", xTile);
 
-        for (uint8_t yTile=0; yTile < hTiles; yTile++)
-        {
-            std::println("xTile, yTile loop: ({}, {})", xTile, yTile);
+//         for (uint8_t yTile=0; yTile < hTiles; yTile++)
+//         {
+//             std::println("xTile, yTile loop: ({}, {})", xTile, yTile);
 
-            //uint16_t ntEntry = cart->chrData(iChrBlock, startNameTable + yTile*hTiles + xTile);
-            uint16_t ntEntry = read(startNameTable + xTile*wTiles + yTile);
-            //uint8_t ntEntry = 0x00;
-            if (ntEntry != 0x0000)
-                std::println("testNameTables; xTile={}, yTile={}; ntEntry={:04X}", xTile, yTile, ntEntry);
+//             //uint16_t ntEntry = cart->chrData(iChrBlock, startNameTable + yTile*hTiles + xTile);
+//             uint16_t ntEntry = read(startNameTable + xTile*wTiles + yTile);
+//             //uint8_t ntEntry = 0x00;
+//             if (ntEntry != 0x0000)
+//                 std::println("testNameTables; xTile={}, yTile={}; ntEntry={:04X}", xTile, yTile, ntEntry);
 
-            uint16_t ptOffset = ntEntry << 4;
+//             uint16_t ptOffset = ntEntry << 4;
 
-             //construct tile from pattern table data
-            for (auto dy=0; dy < 8; dy++)
-            {
-                uint8_t rowDataPlane1 = read(ptOffset + dy);
-                uint8_t rowDataPlane2 = read(ptOffset + dy + 8);
+//              //construct tile from pattern table data
+//             for (auto dy=0; dy < 8; dy++)
+//             {
+//                 uint8_t rowDataPlane1 = read(ptOffset + dy);
+//                 uint8_t rowDataPlane2 = read(ptOffset + dy + 8);
 
-                uint8_t y = 8*yTile + dy;
-                for (auto dx=0; dx < 8; dx++)
-                {
-                    uint8_t x = 8*xTile + (8 - dx - 1);
-                    uint8_t valuePlane1 = (rowDataPlane1 >> dx) & 0x1;
-                    uint8_t valuePlane2 = (rowDataPlane2 >> dx) & 0x1;
+//                 uint8_t y = 8*yTile + dy;
+//                 for (auto dx=0; dx < 8; dx++)
+//                 {
+//                     uint8_t x = 8*xTile + (8 - dx - 1);
+//                     uint8_t valuePlane1 = (rowDataPlane1 >> dx) & 0x1;
+//                     uint8_t valuePlane2 = (rowDataPlane2 >> dx) & 0x1;
 
-                    std::println("setting pixel ({}, {})", x, y);
+//                     std::println("setting pixel ({}, {})", x, y);
 
-                    m_pixels[x*SCREEN_HEIGHT + y] = (valuePlane2 << 1) + valuePlane1;
-                }
-            }
-        }
-    }
-}
+//                     m_pixels[x*SCREEN_HEIGHT + y] = (valuePlane2 << 1) + valuePlane1;
+//                 }
+//             }
+//         }
+//     }
+// }
 
 uint16_t Ppu::currentTileOffset()
 {
@@ -263,41 +316,87 @@ uint8_t Ppu::currentFineY()
 }
 
 
+
 void Ppu::incrementCoarseX()
 {
-    uint16_t coarseX = m_internalRegisterV & 0x1F;
-    coarseX ++;
+    // see https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
+    // The coarse X component of v needs to be incremented when the next tile is reached. Bits 0-4 are incremented, with overflow toggling bit 10. This means that bits 0-4 count from 0 to 31 across a single nametable, and bit 10 selects the current nametable horizontally.
 
-    m_internalRegisterV = (m_internalRegisterV & (~0x1f)) | coarseX;
+    if ((m_internalRegisterV & 0x001F) == 31)
+    {
+        m_internalRegisterV &= ~0x001F;
+        //m_internalRegisterV ^= 0x0400; // TODO: switch horizontal nametable
+    }
+    else
+    {
+        m_internalRegisterV ++;
+    }
 }
 
 void Ppu::incrementY()
 {
-    uint16_t coarseY = (m_internalRegisterV >> 5) & 0x1F;
-    uint16_t fineY = m_internalRegisterV >> 12;
-    if (fineY == 0x07)
-    {
-        fineY = 0x00;
-        coarseY ++;
+    // see https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
+    // If rendering is enabled, fine Y is incremented at dot 256 of each scanline, overflowing to coarse Y, and finally adjusted to wrap among the nametables vertically.
+
+    // Bits 12-14 are fine Y. Bits 5-9 are coarse Y. Bit 11 selects the vertical nametable.
+
+    if ((m_internalRegisterV & 0x7000) != 0x7000)
+    {   
+        // if fine Y < 7, increment fine Y
+        m_internalRegisterV += 0x1000;
     }
     else
     {
-        fineY ++;
+        m_internalRegisterV &= ~0x7000; // fine Y = 0
+        // let y = coarse Y
+        uint16_t y = (m_internalRegisterV & 0x03E0) >> 5;
+        if (y == 29)
+        {
+            y = 0;
+            //m_internalRegisterV ^= 0x0800; // TODO: switch vertical nametable
+        }
+        else if (y == 31)
+        {
+            // coarse Y = 0, nametable not switched
+            y = 0;
+        }
+        else
+        {
+            // increment coarse Y
+            y += 1;
+        }
+        m_internalRegisterV = (m_internalRegisterV & ~0x03E0) | (y << 5);
     }
-
-    m_internalRegisterV = (m_internalRegisterV & (~(0x1f << 5)))  | (coarseY <<  5);
-    m_internalRegisterV = (m_internalRegisterV & (~(0x07 << 12))) | (fineY   << 12);
 }
 
 
-void Ppu::dumpPixels()
+void Ppu::renderPixel()
 {
-    std::println("--Ppu::pixels");
+    int bit = 0x8000 >> fineX;
+
+    uint8_t pixel_lo = (pattern_shift_low & bit) ? 1 : 0;
+    uint8_t pixel_hi = (pattern_shift_high & bit) ? 1 : 0;
+    uint8_t pixel = (pixel_hi << 1) | pixel_lo;
+
+    // uint8_t attr_lo = (attribute_shift_low & bit) ? 1 : 0;
+    // uint8_t attr_hi = (attribute_shift_high & bit) ? 1 : 0;
+    // uint8_t palette = (attr_hi << 1) | attr_lo;
+
+    // uint8_t color = ppuRead(0x3F00 + (palette << 2) + pixel);
+
+    //m_frameBuffer[m_scanline][cycle - 1] = systemPalette[color]
+    m_frameBuffer[m_scanline][m_dot - 1] = pixel;
+}
+
+
+void Ppu::dumpFrameBuffer()
+{
+    std::println("-- Ppu::dumpFrameBuffer");
     for (auto x=0; x < SCREEN_WIDTH; x++)
     {
         for (auto y=0; y < SCREEN_HEIGHT; y++)
         {
-            std::print("({:01X})", m_pixels[x*SCREEN_HEIGHT + y]);
+            std::print("({:01X})", m_frameBuffer[x*SCREEN_HEIGHT + y]);
         }
         std::println();
     }

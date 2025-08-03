@@ -18,6 +18,7 @@ set(MAIN_SOURCES
     src/cpu_opcodes.cpp
     src/cpu_addr_modes.cpp
     src/ppu.cpp
+    src/bit_operations.cpp
     src/palette.cpp
     src/display.cpp
     src/keyboard.cpp
@@ -37,6 +38,17 @@ set(VIEWER_SOURCES
 add_executable(${VIEWER_EXE} ${VIEWER_SOURCES})
 target_include_directories(${VIEWER_EXE} PRIVATE include)
 set_property(TARGET ${VIEWER_EXE} PROPERTY CXX_STANDARD 23)
+
+
+
+set(TEST_UTILS_EXE test_utils.x)
+set(TEST_UTILS_SOURCES
+    src/bit_operations.cpp
+    src/test_utils.cpp
+)
+add_executable(${TEST_UTILS_EXE} ${TEST_UTILS_SOURCES})
+target_include_directories(${TEST_UTILS_EXE} PRIVATE include)
+set_property(TARGET ${TEST_UTILS_EXE} PROPERTY CXX_STANDARD 23)
 
 
 # Add compiler errors/warnings flags

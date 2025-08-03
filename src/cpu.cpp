@@ -5,8 +5,8 @@
 
 #include <print>
 
-#undef PRINT_OPCODES
-//#define PRINT_OPCODES
+//#undef PRINT_OPCODES
+#define PRINT_OPCODES
 
 
 void Cpu::reset()

@@ -49,13 +49,13 @@ public:
 private:
     Bus* m_bus;
     
-    uint8_t m_registers[Register::N_REGISTERS] = {}; //actually PPUSTATUS is usually +0+x xxxx at powerup
+    uint8_t m_registers[Register::N_REGISTERS] = {}; //"actually PPUSTATUS is usually +0+x xxxx at powerup"
     uint16_t m_internalRegisterV = 0x00;
     uint16_t m_internalRegisterT = 0x00;
     uint8_t  m_internalRegisterX = 0x00;
     uint8_t  m_internalRegisterW = 0x00;
 
-    uint8_t m_pixels[SCREEN_WIDTH*SCREEN_HEIGHT] = {};
+    uint8_t m_frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT] = {};
     uint8_t m_internalRam[INTERNAL_RAM_SIZE] = {};
     
     uint16_t m_scanline;
@@ -63,7 +63,7 @@ private:
     bool m_frameComplete;
     bool m_oddFrame = false;
     
-    //internal latches
+    //internal latches?
     uint8_t m_ntEntry;
     uint8_t m_attrEntry;
     uint8_t m_rowDataPlane1;
@@ -77,5 +77,6 @@ private:
     void incrementCoarseX();
     void incrementY();
 
-    void dumpPixels();
+    void renderPixel();
+    void dumpFrameBuffer();
 };
