@@ -22,10 +22,10 @@ public:
 private:
     std::string m_filename;
 
-    uint8_t m_rawData[MAX_SIZE] {};
-    size_t m_rawDataSize;
     uint8_t* m_progData;
     uint8_t* m_charData;
+    size_t m_rawDataSize;
+    uint8_t m_rawData[MAX_SIZE] {};
 
     bool load(const char* romPath);
     std::bitset<8> flags6();

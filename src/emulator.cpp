@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     bus->insertCartridge(cart);
     bus->reset();
 
-
+    
     Display* display = new Display();
     auto sdlOk = display->initSdl();
     if (!sdlOk) {
@@ -37,15 +37,13 @@ int main(int argc, char* argv[])
         display->shutdownSdl();
         return 1;
     }
-
+    
     Keyboard* keyboard = new Keyboard();
+    
+    
+    bus->cpu()->setPC(0xC000); //automation mode
+    bus->cpu()->setTracing(true);
 
-
-    //initial wait
-    for (auto i=0; i < 5e6; i++)
-    {
-        bus->cpu()->clock();
-    }
 
     //bus->ppu()->testNameTables();
     

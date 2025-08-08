@@ -2,6 +2,7 @@
 
 #include "instruction.hpp"
 #include "bus.hpp"
+#include "bit_operations.hpp"
 
 #include <print>
 
@@ -12,38 +13,38 @@
 //-- Load/Store --
 uint8_t Cpu::OpLDA()
 {
-    A = read(targetAddress);
+    A = read(m_targetAddress);
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
     return 0x00;
 }
 uint8_t Cpu::OpLDX()
 {
-    X = read(targetAddress);
+    X = read(m_targetAddress);
     setFlag(FlagIndex::Zero,     X == 0x00);
     setFlag(FlagIndex::Negative, X & 0x80);
     return 0x00;
 }
 uint8_t Cpu::OpLDY()
 {
-    Y = read(targetAddress);
+    Y = read(m_targetAddress);
     setFlag(FlagIndex::Zero,     Y == 0x00);
     setFlag(FlagIndex::Negative, Y & 0x80);
     return 0x00;
 }
 uint8_t Cpu::OpSTA()
 {
-    write(targetAddress, A);
+    write(m_targetAddress, A);
     return 0x00;
 }
 uint8_t Cpu::OpSTX()
 {
-    write(targetAddress, X);
+    write(m_targetAddress, X);
     return 0x00;
 }
 uint8_t Cpu::OpSTY()
 {
-    write(targetAddress, Y);
+    write(m_targetAddress, Y);
     return 0x00;
 }
 
@@ -87,7 +88,7 @@ uint8_t Cpu::OpTSX()
 }
 uint8_t Cpu::OpTXS()
 {
-    X = SP;
+    SP = X;
     return 0x00;
 }
 uint8_t Cpu::OpPHA()
@@ -98,7 +99,9 @@ uint8_t Cpu::OpPHA()
 }
 uint8_t Cpu::OpPHP()
 {
-    pushStack(P);
+    uint8_t value = P;
+    value |= 0b00110000; // the B flag and extra bit are pushed as 1
+    pushStack(value);
     return 0x00;
 }
 uint8_t Cpu::OpPLA()
@@ -111,34 +114,36 @@ uint8_t Cpu::OpPLA()
 uint8_t Cpu::OpPLP()
 {
     P = popStack();
+    P &= ~(0b00010000); // clear B flag, just for consistency with nestest log
+    P |=   0b00100000; // extra bit is always set, just for consistency with nestest log
     return 0x00;
 }
 
 //-- Logical --
 uint8_t Cpu::OpAND()
 {
-    A = A & read(targetAddress);
+    A = A & read(m_targetAddress);
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
     return 0x00;
 }
 uint8_t Cpu::OpEOR()
 {
-    A = A ^ read(targetAddress);
+    A = A ^ read(m_targetAddress);
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
     return 0x00;
 }
 uint8_t Cpu::OpORA()
 {
-    A = A | read(targetAddress);
+    A = A | read(m_targetAddress);
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
     return 0x00;
 }
 uint8_t Cpu::OpBIT()
 {
-    uint8_t mValue = read(targetAddress);
+    uint8_t mValue = read(m_targetAddress);
     setFlag(FlagIndex::Zero,     (A & mValue) == 0x00);
     setFlag(FlagIndex::Overflow, ((mValue >> 6) & 0x1) == 0x1);
     setFlag(FlagIndex::Negative, ((mValue >> 7) & 0x1) == 0x1);
@@ -148,58 +153,71 @@ uint8_t Cpu::OpBIT()
 //-- Arithmetic --
 uint8_t Cpu::OpADC()
 {
-    uint16_t res = A + read(targetAddress) + (hasFlag(FlagIndex::Carry) ? 0x0100 : 0x0000);
-    A = (res & 0xFF);
-    setFlag(FlagIndex::Carry,    res >= 0x0100);
+    uint8_t value = read(m_targetAddress);
+    uint16_t res = A + value + (hasFlag(FlagIndex::Carry) ? 0x1: 0x0);
+    
+    uint8_t Aout = (res & 0xFF);
+    bool overflowOut = (Aout ^ A) & (Aout ^ value) & 0x80;
+
+    A = Aout;
+    
+    setFlag(FlagIndex::Carry,  res >= 0x0100);
     setFlag(FlagIndex::Zero,     A == 0x00);
-    setFlag(FlagIndex::Negative, A & 0x80);
-    //see http://www.6502.org/tutorials/vflag.html for Overflow
-    //setFlag(FlagIndex::Overflow, (((int8_t)A) >= -128) && (((int8_t)A) <= 127)); //TODO: Overflow
+    setFlag(FlagIndex::Negative, A &  0x80);
+    // for an explanation on Overflow
+    // see http://www.6502.org/tutorials/vflag.html
+    // and https://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
+    setFlag(FlagIndex::Overflow, overflowOut);
   
     return 0x00;
 }
 uint8_t Cpu::OpSBC()
 {
-    uint16_t res = A - read(targetAddress) + (hasFlag(FlagIndex::Carry) ? 0x0100 : 0x0000) - 1;
-    A = (res & 0xFF);
+    uint8_t value = read(m_targetAddress);
+    uint16_t res = A - value - (hasFlag(FlagIndex::Carry) ? 0x0: 0x1);
+
+    uint8_t Aout = (res & 0xFF);
+    bool overflowOut = (Aout ^ A) & (Aout ^ (~value)) & 0x80;
+
+    A = Aout;
+
     setFlag(FlagIndex::Carry,    !(res >= 0x0100));
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
-    //see http://www.6502.org/tutorials/vflag.html for Overflow
-    //setFlag(FlagIndex::Overflow, (((int8_t)A) < -128) || (((int8_t)A) > 127)); //TODO: Overflow
-  
+    setFlag(FlagIndex::Overflow, overflowOut);
+    
     return 0x00;
 }
 uint8_t Cpu::OpCMP()
 {
-    uint8_t res = A - read(targetAddress);
-    setFlag(FlagIndex::Carry,    res > 0x00);
+    int16_t res = A - read(m_targetAddress);
+    setFlag(FlagIndex::Carry,    res >= 0x00);
     setFlag(FlagIndex::Zero,     res == 0x00);
-    setFlag(FlagIndex::Negative, res & 0x80);
+    setFlag(FlagIndex::Negative, res  & 0xff80);
     return 0x00;
 }
 uint8_t Cpu::OpCPX()
 {
-    uint8_t res = X - read(targetAddress);
-    setFlag(FlagIndex::Carry,    res > 0x00);
+    int16_t res = X - read(m_targetAddress);
+    setFlag(FlagIndex::Carry,    res >= 0x00);
     setFlag(FlagIndex::Zero,     res == 0x00);
-    setFlag(FlagIndex::Negative, res & 0x80);
+    setFlag(FlagIndex::Negative, res & 0xff80);
     return 0x00;
 }
 uint8_t Cpu::OpCPY()
 {
-    uint8_t res = Y - read(targetAddress);
-    setFlag(FlagIndex::Carry,    res > 0x00);
+    int16_t res = Y - read(m_targetAddress);
+    setFlag(FlagIndex::Carry,    res >= 0x00);
     setFlag(FlagIndex::Zero,     res == 0x00);
-    setFlag(FlagIndex::Negative, res & 0x80);
+    setFlag(FlagIndex::Negative, res & 0xff80);
     return 0x00;
 }
 
 //-- Increments & Decrements --
 uint8_t Cpu::OpINC()
 {
-    uint8_t res = read(targetAddress) + 1;
-    write(targetAddress, res);
+    uint8_t res = read(m_targetAddress) + 1;
+    write(m_targetAddress, res);
     setFlag(FlagIndex::Zero,     res == 0x00);
     setFlag(FlagIndex::Negative, res & 0x80);
     return 0x00;
@@ -220,8 +238,8 @@ uint8_t Cpu::OpINY()
 }
 uint8_t Cpu::OpDEC()
 {
-    uint8_t res = read(targetAddress) - 1;
-    write(targetAddress, res);
+    uint8_t res = read(m_targetAddress) - 1;
+    write(m_targetAddress, res);
     setFlag(FlagIndex::Zero,     res == 0x00);
     setFlag(FlagIndex::Negative, res & 0x80);
     return 0x00;
@@ -252,12 +270,12 @@ uint8_t Cpu::OpASL()
     }
     else
     {
-        uint8_t value = read(targetAddress);
+        uint8_t value = read(m_targetAddress);
         setFlag(FlagIndex::Carry, value & 0x80);
         value <<= 1;
         setFlag(FlagIndex::Zero, value == 0x00);
         setFlag(FlagIndex::Negative, value & 0x80);
-        write(targetAddress, value);
+        write(m_targetAddress, value);
     }
 
     return 0x00;
@@ -272,12 +290,12 @@ uint8_t Cpu::OpLSR()
     }
     else
     {
-        uint8_t value = read(targetAddress);
+        uint8_t value = read(m_targetAddress);
         setFlag(FlagIndex::Carry, value & 0x01);
         value >>= 1;
         setFlag(FlagIndex::Zero, value == 0x00);
         //setFlag(FlagIndex::Negative, value & 0x80);
-        write(targetAddress, value);
+        write(m_targetAddress, value);
     }
 
     return 0x00;
@@ -298,7 +316,7 @@ uint8_t Cpu::OpROL()
     }
     else
     {
-        uint8_t value = read(targetAddress);
+        uint8_t value = read(m_targetAddress);
         setFlag(FlagIndex::Carry, value & 0x80);
         value <<= 1;
         if (oldCarry)
@@ -307,7 +325,7 @@ uint8_t Cpu::OpROL()
             value &= (~0x01);
         setFlag(FlagIndex::Zero, value == 0x00);
         setFlag(FlagIndex::Negative, value & 0x80);
-        write(targetAddress, value);
+        write(m_targetAddress, value);
     }
 
     return 0x00;
@@ -328,7 +346,7 @@ uint8_t Cpu::OpROR()
     }
     else
     {
-        uint8_t value = read(targetAddress);
+        uint8_t value = read(m_targetAddress);
         setFlag(FlagIndex::Carry, value & 0x01);
         value >>= 1;
         if (oldCarry)
@@ -337,7 +355,7 @@ uint8_t Cpu::OpROR()
             value &= (~0x80);
         setFlag(FlagIndex::Zero, value == 0x00);
         setFlag(FlagIndex::Negative, value & 0x80);
-        write(targetAddress, value);
+        write(m_targetAddress, value);
     }
     return 0x00;
 }
@@ -345,7 +363,7 @@ uint8_t Cpu::OpROR()
 //-- Jumps & Calls --
 uint8_t Cpu::OpJMP()
 {
-    PC = targetAddress;
+    PC = m_targetAddress;
     return 0x00;
 }
 uint8_t Cpu::OpJSR()
@@ -353,7 +371,7 @@ uint8_t Cpu::OpJSR()
     PC = PC - 1;
     pushStack(PC & 0xff);
     pushStack((PC >> 8)& 0xff);
-    PC = targetAddress;
+    PC = m_targetAddress;
     return 0x00;
 }
 uint8_t Cpu::OpRTS()
@@ -367,56 +385,56 @@ uint8_t Cpu::OpRTS()
 uint8_t Cpu::OpBCC()
 {
     if (!hasFlag(FlagIndex::Carry))
-        PC = targetAddress;
+        PC = m_targetAddress;
 
     return 0x00;
 }
 uint8_t Cpu::OpBCS()
 {
     if (hasFlag(FlagIndex::Carry))
-        PC = targetAddress;
+        PC = m_targetAddress;
 
     return 0x00;
 }
 uint8_t Cpu::OpBEQ()
 {
     if (hasFlag(FlagIndex::Zero))
-        PC = targetAddress;
+        PC = m_targetAddress;
 
     return 0x00;
 }
 uint8_t Cpu::OpBMI()
 {
     if (hasFlag(FlagIndex::Negative))
-        PC = targetAddress;
+        PC = m_targetAddress;
 
     return 0x00;
 }
 uint8_t Cpu::OpBNE()
 {
     if (!hasFlag(FlagIndex::Zero))
-        PC = targetAddress;
+        PC = m_targetAddress;
 
     return 0x00;
 }
 uint8_t Cpu::OpBPL()
 {
     if (!hasFlag(FlagIndex::Negative))
-        PC = targetAddress;
+        PC = m_targetAddress;
 
     return 0x00;
 }
 uint8_t Cpu::OpBVC()
 {
     if (!hasFlag(FlagIndex::Overflow))
-        PC = targetAddress;
+        PC = m_targetAddress;
 
     return 0x00;
 }
 uint8_t Cpu::OpBVS()
 {
     if (hasFlag(FlagIndex::Overflow))
-        PC = targetAddress;
+        PC = m_targetAddress;
 
     return 0x00;
 }
@@ -461,15 +479,16 @@ uint8_t Cpu::OpSEI()
 //-- System Functions --
 uint8_t Cpu::OpBRK()
 {
-    pushStack((PC & 0xff00) >> 8);
-    pushStack(PC & 0xff);
     //CHECK: " The return address pushed to the stack is PC+2, 
     // providing an extra byte of spacing for a break mark
     // (identifying a reason for the break.) "
+    PC = PC + 2;
+    pushStack((PC & 0xff00) >> 8);
+    pushStack(PC & 0xff);
     pushStack(P);
 
-    uint16_t lo = m_bus->read(0xFFFC);
-    uint16_t hi = m_bus->read(0xFFFD);
+    uint16_t lo = m_bus->read(0xFFFE);
+    uint16_t hi = m_bus->read(0xFFFF);
     PC = (hi << 8) | lo;
 
     setFlag(FlagIndex::InterruptDisable, true);

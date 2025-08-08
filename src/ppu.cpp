@@ -33,9 +33,14 @@ void Ppu::reset()
     m_internalRegisterW = 0x00;
 
     m_dot = 0;
-    m_scanline = 0;
+    m_scanline = 261;
     m_frameComplete = false;
     m_oddFrame = false;
+}
+
+uint8_t Ppu::peekRegister(Register reg)
+{
+    return m_registers[reg];
 }
 
 uint8_t Ppu::readRegister(Register reg)
@@ -98,6 +103,11 @@ void Ppu::writeRegister(Register reg, uint8_t value)
 
 uint8_t Ppu::read(uint16_t addr)
 {
+    if (addr >= 0x4000)
+    {
+        throw std::runtime_error(std::format("access to PPU memory out of bounds; addr=0x{:02X}", addr));
+    }
+
     if (addr >= 0x3F00)
     {
         //TODO: palette ram indexes
@@ -107,7 +117,7 @@ uint8_t Ppu::read(uint16_t addr)
     if (addr >= 0x2000)
     {
         //access bus internal ram
-        std::println("read: accessing bus internal ram");
+        //std::println("ppu read: accessing bus internal ram");
         return m_bus->read(addr - 0x2000);
     }
 
@@ -122,6 +132,11 @@ uint8_t Ppu::read(uint16_t addr)
 
 void Ppu::write(uint16_t addr, uint8_t value)
 {
+    if (addr >= 0x4000)
+    {
+        throw std::runtime_error(std::format("access to PPU memory out of bounds; addr=0x{:02X}", addr));
+    }
+
     if (addr >= 0x3F00)
     {
         //TODO: palette ram indexes
@@ -136,7 +151,7 @@ void Ppu::write(uint16_t addr, uint8_t value)
     }
 
     //access bus chr rom
-    throw std::runtime_error("write access to ROM");
+    throw std::runtime_error("invalid write access to ROM");
 }
 
 
@@ -206,17 +221,23 @@ void Ppu::clock()
                 break;
 
             case 5:
+            {
                 //BG lsbits (first)
-                m_rowDataPlane1 = read(m_ntEntry + currentFineY());
+                uint8_t rowDataPlane1 = read(m_ntEntry + currentFineY());
+                assignBits(&m_shiftLo, rowDataPlane1, 0, 0, 1);
                 break;
+            }
             case 6:
                 //BG lsbits (second)
                 break;
 
             case 7:
+            {
                 //BG msbits (first?)
-                m_rowDataPlane1 = read(m_ntEntry + currentFineY() + 8);
+                uint8_t rowDataPlane2 = read(m_ntEntry + currentFineY() + 8);
+                assignBits(&m_shiftHi, rowDataPlane2, 0, 0, 1);
                 break;
+            }
         }
     }    
 
@@ -230,8 +251,11 @@ void Ppu::clock()
     }
 
     if (m_dot > 0 && m_dot <= 256)
+    {
         renderPixel();
-    
+        updateShiftRegisters();
+    }
+
     if ((m_dot % 8) == 0)
         incrementCoarseX();
     if (m_dot == 256)
@@ -303,7 +327,7 @@ void Ppu::clock()
 
 uint16_t Ppu::currentTileOffset()
 {
-    //CHECK
+    //CHECK currentTileOffset
     uint16_t coarseX = (m_internalRegisterV & 0x1F);
     uint16_t coarseY = (m_internalRegisterV >> 5) & 0x1F;
     return coarseX*wTiles + coarseY;
@@ -372,22 +396,28 @@ void Ppu::incrementY()
 
 void Ppu::renderPixel()
 {
-    //int bit = 0x8000 >> fineX;
+    int bit = 0x8000 >> (m_dot % 8);
 
-    //uint8_t pixel_lo = (pattern_shift_low & bit) ? 1 : 0;
-    //uint8_t pixel_hi = (pattern_shift_high & bit) ? 1 : 0;
-    //uint8_t pixel = (pixel_hi << 1) | pixel_lo;
+    uint8_t pixel_lo = (m_shiftHi & bit) ? 1 : 0;
+    uint8_t pixel_hi = (m_shiftLo & bit) ? 1 : 0;
+    uint8_t pixel = (pixel_hi << 1) | pixel_lo;
 
-    //// uint8_t attr_lo = (attribute_shift_low & bit) ? 1 : 0;
-    //// uint8_t attr_hi = (attribute_shift_high & bit) ? 1 : 0;
-    //// uint8_t palette = (attr_hi << 1) | attr_lo;
+    // uint8_t attr_lo = (attribute_shift_low & bit) ? 1 : 0;
+    // uint8_t attr_hi = (attribute_shift_high & bit) ? 1 : 0;
+    // uint8_t palette = (attr_hi << 1) | attr_lo;
 
-    //// uint8_t color = ppuRead(0x3F00 + (palette << 2) + pixel);
+    // uint8_t color = ppuRead(0x3F00 + (palette << 2) + pixel);
 
-    ////m_frameBuffer[m_scanline][cycle - 1] = systemPalette[color]
-    //m_frameBuffer[m_scanline][m_dot - 1] = pixel;
+    //m_frameBuffer[m_scanline][cycle - 1] = systemPalette[color]
+    m_frameBuffer[SCREEN_HEIGHT * (m_dot - 1) + m_scanline] = pixel;
 }
 
+
+void Ppu::updateShiftRegisters()
+{
+    m_shiftHi <<= 1;
+    m_shiftLo <<= 1;
+}
 
 void Ppu::dumpFrameBuffer()
 {
@@ -396,7 +426,7 @@ void Ppu::dumpFrameBuffer()
     {
         for (auto y=0; y < SCREEN_HEIGHT; y++)
         {
-            std::print("({:01X})", m_frameBuffer[x*SCREEN_HEIGHT + y]);
+            std::print("({:01X})", m_frameBuffer[SCREEN_HEIGHT*x + y]);
         }
         std::println();
     }

@@ -37,6 +37,7 @@ public:
     const uint8_t *pixels() { return m_frameBuffer; }
     uint8_t readRegister(Register reg);
     void writeRegister(Register reg, uint8_t value);
+    uint8_t peekRegister(Register reg);
 
     void connect(Bus* bus) { m_bus = bus; }
     void reset();
@@ -63,11 +64,13 @@ private:
     bool m_frameComplete;
     bool m_oddFrame = false;
     
+    //shift registers
+    uint16_t m_shiftHi;
+    uint16_t m_shiftLo;
+
     //internal latches?
     uint8_t m_ntEntry;
     uint8_t m_attrEntry;
-    uint8_t m_rowDataPlane1;
-    uint8_t m_rowDataPlane2;
 
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
@@ -78,5 +81,7 @@ private:
     void incrementY();
 
     void renderPixel();
+    void updateShiftRegisters();
+
     void dumpFrameBuffer();
 };

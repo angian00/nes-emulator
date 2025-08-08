@@ -21,9 +21,8 @@ public:
 
     
 private:
-    uint8_t m_internalRam[INTERNAL_RAM_SIZE];
-
     Cartridge* m_cart;
     Cpu* m_cpu;
     Ppu* m_ppu;
+    uint8_t m_internalRam[INTERNAL_RAM_SIZE];
 };

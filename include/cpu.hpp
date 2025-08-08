@@ -37,7 +37,9 @@ class Cpu
 
 public:
     Cpu() { initInstrLookupTable(); };
-    
+    void setTracing(bool value) { m_tracing = value; }
+    void setPC(uint16_t value) { PC = value; }
+
     void connect(Bus* bus) { m_bus = bus; }
     void reset();
     void clock();
@@ -128,10 +130,13 @@ private:
     uint8_t   P;  // Processor status
     
     // other state
-    uint8_t nWaitCycles;
-    uint16_t targetAddress;
-    uint32_t nProcessedInstr;
+    uint8_t m_nWaitCycles;
+    uint16_t m_targetAddress;
+    uint32_t m_nProcessedInstr;
+    uint32_t m_nTotCycles;
     uint8_t (Cpu::*m_currAddrMode)(void);
+
+    bool m_tracing = false;
 
     bool hasFlag(FlagIndex flagIndex);
     void setFlag(FlagIndex flagIndex, bool value);

@@ -19,11 +19,11 @@ bool Display::initSdl()
     auto windowWidth  = Ppu::SCREEN_WIDTH  * SCALE_FACTOR;
     auto windowHeight = Ppu::SCREEN_HEIGHT * SCALE_FACTOR;
 
-    window = SDL_CreateWindow("CHIP-8 Emulator by AnGian",
-                                          SDL_WINDOWPOS_UNDEFINED,
-                                          SDL_WINDOWPOS_UNDEFINED,
-                                          windowWidth, windowHeight,
-                                          SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("NES Emulator by AnGian",
+                                SDL_WINDOWPOS_UNDEFINED,
+                                SDL_WINDOWPOS_UNDEFINED,
+                                windowWidth, windowHeight,
+                                SDL_WINDOW_SHOWN);
     if (!window)
     {
         std::println("Window could not be created!");

@@ -16,27 +16,27 @@ uint8_t Cpu::AddrIMP()
 uint8_t Cpu::AddrACC()
 {
     //CHECK
-    targetAddress = A;
+    m_targetAddress = A;
     return 0x00;
 }
 uint8_t Cpu::AddrIMM()
 {
-    targetAddress = PC++;
+    m_targetAddress = PC++;
     return 0x00;
 }
 uint8_t Cpu::AddrZP0()
 {
-    targetAddress = read(PC++);
+    m_targetAddress = read(PC++);
     return 0x00;
 }
 uint8_t Cpu::AddrZPX()
 {
-    targetAddress = read(PC++) + X;
-    return 0x01; //CHECK
+    m_targetAddress = read(PC++) + X;
+    return 0x01; //CHECK additional clock cycle
 }
 uint8_t Cpu::AddrZPY()
 {
-    targetAddress = read(PC++) + Y;
+    m_targetAddress = read(PC++) + Y;
     return 0x00;
 }
 uint8_t Cpu::AddrREL()
@@ -46,15 +46,15 @@ uint8_t Cpu::AddrREL()
         //negative offset
         rel |= 0xFF00;
 
-    targetAddress = PC + rel;
-    return 0x00;  //CHECK page cross
+    m_targetAddress = PC + rel;
+    return 0x00;  //CHECK additional clock cycle
 }
 
 uint8_t Cpu::AddrABS()
 {
     uint16_t lo = read(PC++);
     uint16_t hi = read(PC++);
-    targetAddress = (hi << 8) | lo;
+    m_targetAddress = (hi << 8) | lo;
 
     return 0x00;
 }
@@ -64,8 +64,8 @@ uint8_t Cpu::AddrABX()
     uint16_t lo = read(PC++);
     uint16_t hi = read(PC++);
 
-    targetAddress = ((hi << 8) | lo) + X;
-    if ((targetAddress & 0xff00) != (hi << 8))
+    m_targetAddress = ((hi << 8) | lo) + X;
+    if ((m_targetAddress & 0xff00) != (hi << 8))
     {
         //page cross consumes a clock cycle
         return 0x01;
@@ -78,8 +78,8 @@ uint8_t Cpu::AddrABY()
     uint16_t lo = read(PC++);
     uint16_t hi = read(PC++);
 
-    targetAddress = ((hi << 8) | lo) + Y;
-    if ((targetAddress & 0xff00) != (hi << 8))
+    m_targetAddress = ((hi << 8) | lo) + Y;
+    if ((m_targetAddress & 0xff00) != (hi << 8))
     {
         //page cross consumes a clock cycle
         return 0x01;
@@ -95,7 +95,7 @@ uint8_t Cpu::AddrIND()
 
     uint16_t lo2 = read(addr1++);
     uint16_t hi2 = read(addr1);
-    targetAddress = ((hi2 << 8) | lo2);
+    m_targetAddress = ((hi2 << 8) | lo2);
 
     //TODO: check additional clock cycle
 
@@ -109,7 +109,7 @@ uint8_t Cpu::AddrIZX()
     uint16_t lo2 = read(addr1 & 0xff);
     addr1 ++;
     uint16_t hi2 = read(addr1 & 0xff);
-    targetAddress = ((hi2 << 8) | lo2);
+    m_targetAddress = ((hi2 << 8) | lo2);
 
     return 0x00;
 }
@@ -120,7 +120,7 @@ uint8_t Cpu::AddrIZY()
 
     uint16_t lo2 = read(addr1++);
     uint16_t hi2 = read(addr1);
-    targetAddress = ((hi2 << 8) | lo2) + Y;
+    m_targetAddress = ((hi2 << 8) | lo2) + Y;
     //TODO: check additional clock cycle
     
     return 0x00;
