@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
         bus->cpu()->clock();
     }
 
-    bus->ppu()->testNameTables();
+    //bus->ppu()->testNameTables();
     
     // Main loop
     bool running = true;

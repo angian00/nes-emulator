@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.5.1)
 
-project(angian-nes-emu.x)
+project(angian-nes-emu)
 
 
 set(CMAKE_BUILD_TYPE Debug)
+
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+
 
 # Add SDL2 CMake modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
@@ -30,7 +34,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE include)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
 
 
-set(VIEWER_EXE chr-viewer.x)
+set(VIEWER_EXE chr-viewer)
 set(VIEWER_SOURCES
     src/cartridge.cpp
     src/sprite_viewer.cpp
@@ -41,7 +45,7 @@ set_property(TARGET ${VIEWER_EXE} PROPERTY CXX_STANDARD 23)
 
 
 
-set(TEST_UTILS_EXE test_utils.x)
+set(TEST_UTILS_EXE test_utils)
 set(TEST_UTILS_SOURCES
     src/bit_operations.cpp
     src/test_utils.cpp
@@ -61,6 +65,13 @@ find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME}  ${SDL2_LIBRARIES})
 target_link_libraries(${VIEWER_EXE}  ${SDL2_LIBRARIES})
+
+IF (WIN32)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$ENV{USERPROFILE}/tools/sdl2/SDL2.dll"
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+ENDIF()
 
 # Add SDL2_image library
 #find_package(SDL2_image REQUIRED)

@@ -350,13 +350,16 @@ uint8_t Cpu::OpJMP()
 }
 uint8_t Cpu::OpJSR()
 {
-    pushStack(PC); //CHECK: PC - 1?
+    PC = PC - 1;
+    pushStack(PC & 0xff);
+    pushStack((PC >> 8)& 0xff);
     PC = targetAddress;
     return 0x00;
 }
 uint8_t Cpu::OpRTS()
 {
-    PC = popStack();
+    PC = (popStack() << 8) + popStack();
+    PC ++;
     return 0x00;
 }
 

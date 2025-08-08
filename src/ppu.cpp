@@ -19,7 +19,7 @@ static const uint16_t startNameTable = START_NAME_TABLES + iNameTable * NAME_TAB
 
 void Ppu::reset()
 {
-    memset(m_pixels, 0x00, sizeof(m_pixels));
+    memset(m_frameBuffer, 0x00, sizeof(m_frameBuffer));
     memset(m_internalRam, 0x00, sizeof(m_internalRam));
     
     m_registers[Register::PPUCTRL] = 0x00;
@@ -372,20 +372,20 @@ void Ppu::incrementY()
 
 void Ppu::renderPixel()
 {
-    int bit = 0x8000 >> fineX;
+    //int bit = 0x8000 >> fineX;
 
-    uint8_t pixel_lo = (pattern_shift_low & bit) ? 1 : 0;
-    uint8_t pixel_hi = (pattern_shift_high & bit) ? 1 : 0;
-    uint8_t pixel = (pixel_hi << 1) | pixel_lo;
+    //uint8_t pixel_lo = (pattern_shift_low & bit) ? 1 : 0;
+    //uint8_t pixel_hi = (pattern_shift_high & bit) ? 1 : 0;
+    //uint8_t pixel = (pixel_hi << 1) | pixel_lo;
 
-    // uint8_t attr_lo = (attribute_shift_low & bit) ? 1 : 0;
-    // uint8_t attr_hi = (attribute_shift_high & bit) ? 1 : 0;
-    // uint8_t palette = (attr_hi << 1) | attr_lo;
+    //// uint8_t attr_lo = (attribute_shift_low & bit) ? 1 : 0;
+    //// uint8_t attr_hi = (attribute_shift_high & bit) ? 1 : 0;
+    //// uint8_t palette = (attr_hi << 1) | attr_lo;
 
-    // uint8_t color = ppuRead(0x3F00 + (palette << 2) + pixel);
+    //// uint8_t color = ppuRead(0x3F00 + (palette << 2) + pixel);
 
-    //m_frameBuffer[m_scanline][cycle - 1] = systemPalette[color]
-    m_frameBuffer[m_scanline][m_dot - 1] = pixel;
+    ////m_frameBuffer[m_scanline][cycle - 1] = systemPalette[color]
+    //m_frameBuffer[m_scanline][m_dot - 1] = pixel;
 }
 
 

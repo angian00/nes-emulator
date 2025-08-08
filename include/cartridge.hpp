@@ -23,7 +23,7 @@ private:
     std::string m_filename;
 
     uint8_t m_rawData[MAX_SIZE] {};
-    uint32_t m_rawDataSize;
+    size_t m_rawDataSize;
     uint8_t* m_progData;
     uint8_t* m_charData;
 

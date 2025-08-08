@@ -56,7 +56,7 @@ bool Cartridge::load(const char* filename) {
         return false;
     }
 
-    m_filename = fs::path(filename).filename();
+    m_filename = fs::path(filename).filename().string();
     m_progData = m_rawData + 16 + (hasTrainer() ? 512 : 0);
     m_charData = m_progData + nProgBlocks() * KBYTES_16;
 

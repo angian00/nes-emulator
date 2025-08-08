@@ -34,7 +34,7 @@ public:
     static const uint16_t INTERNAL_RAM_SIZE = 0x800;
 
     Ppu() {  };
-    const uint8_t *pixels() { return m_pixels; }
+    const uint8_t *pixels() { return m_frameBuffer; }
     uint8_t readRegister(Register reg);
     void writeRegister(Register reg, uint8_t value);
 
