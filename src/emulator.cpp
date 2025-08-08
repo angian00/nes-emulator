@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
     Keyboard* keyboard = new Keyboard();
     
     
-    bus->cpu()->setPC(0xC000); //automation mode
+    //bus->cpu()->setPC(0xC000); //automation mode
     bus->cpu()->setTracing(true);
 
 

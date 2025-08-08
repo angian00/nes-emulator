@@ -6,7 +6,7 @@ def main():
     
     for line in file_lines:
         line = line.strip()
-        if line == "" or line.startswith("MODE"):
+        if line == "" or line.startswith("MODE") or line.startswith("#"):
             continue
 
         mode_str = line[:14].strip()

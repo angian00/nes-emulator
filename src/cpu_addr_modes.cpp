@@ -1,7 +1,7 @@
 #include "cpu.hpp"
 
 #include "bus.hpp"
-#include "instruction.hpp"
+#include "instructions.hpp"
 
 #include <print>
 
@@ -31,12 +31,12 @@ uint8_t Cpu::AddrZP0()
 }
 uint8_t Cpu::AddrZPX()
 {
-    m_targetAddress = read(PC++) + X;
-    return 0x01; //CHECK additional clock cycle
+    m_targetAddress = (read(PC++) + X) % 256;
+    return 0x00;
 }
 uint8_t Cpu::AddrZPY()
 {
-    m_targetAddress = read(PC++) + Y;
+    m_targetAddress = (read(PC++) + Y) % 256;
     return 0x00;
 }
 uint8_t Cpu::AddrREL()
@@ -96,15 +96,13 @@ uint8_t Cpu::AddrIND()
 
     uint16_t lo2 = read(addr1);
     addr1 ++;
-    //replicate a know 6502 CPU bug
+    //replicate a known 6502 CPU bug
     if ((addr1 & 0xFF) == 0x00)
         addr1 -= 0x100;
     //
 
     uint16_t hi2 = read(addr1);
     m_targetAddress = ((hi2 << 8) | lo2);
-
-    //m_targetAddress = ((hi1 << 8) | lo1);
 
     return 0x00;
 }
@@ -130,6 +128,6 @@ uint8_t Cpu::AddrIZY()
     m_targetAddress = ((hi2 << 8) | lo2) + Y;
 
     
-    return (isPageBreak(hi2 << 8, m_targetAddress) ? 0x01 : 0x00); //TODO: differentiate per STA vs LDA
+    return (isPageBreak(hi2 << 8, m_targetAddress) ? 0x01 : 0x00);
 }
 

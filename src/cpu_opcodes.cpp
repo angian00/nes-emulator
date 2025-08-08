@@ -1,6 +1,6 @@
 #include "cpu.hpp"
 
-#include "instruction.hpp"
+#include "instructions.hpp"
 #include "bus.hpp"
 #include "bit_operations.hpp"
 
@@ -17,21 +17,21 @@ uint8_t Cpu::OpLDA()
     A = read(m_targetAddress);
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpLDX()
 {
     X = read(m_targetAddress);
     setFlag(FlagIndex::Zero,     X == 0x00);
     setFlag(FlagIndex::Negative, X & 0x80);
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpLDY()
 {
     Y = read(m_targetAddress);
     setFlag(FlagIndex::Zero,     Y == 0x00);
     setFlag(FlagIndex::Negative, Y & 0x80);
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpSTA()
 {
@@ -126,21 +126,21 @@ uint8_t Cpu::OpAND()
     A = A & read(m_targetAddress);
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpEOR()
 {
     A = A ^ read(m_targetAddress);
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpORA()
 {
     A = A | read(m_targetAddress);
     setFlag(FlagIndex::Zero,     A == 0x00);
     setFlag(FlagIndex::Negative, A & 0x80);
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpBIT()
 {
@@ -170,7 +170,7 @@ uint8_t Cpu::OpADC()
     // and https://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
     setFlag(FlagIndex::Overflow, overflowOut);
   
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpSBC()
 {
@@ -187,7 +187,7 @@ uint8_t Cpu::OpSBC()
     setFlag(FlagIndex::Negative, A & 0x80);
     setFlag(FlagIndex::Overflow, overflowOut);
     
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpCMP()
 {
@@ -195,7 +195,7 @@ uint8_t Cpu::OpCMP()
     setFlag(FlagIndex::Carry,    res >= 0x00);
     setFlag(FlagIndex::Zero,     res == 0x00);
     setFlag(FlagIndex::Negative, res  & 0xff80);
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpCPX()
 {
@@ -390,12 +390,11 @@ uint8_t Cpu::OpBCC()
 {
     if (!hasFlag(FlagIndex::Carry))
     {
-        uint8_t nExtraCycles = 1;
+        m_nWaitCycles++;
         if (isPageBreak(PC, m_targetAddress))
-            nExtraCycles ++;
+            m_nWaitCycles++;
         
         PC = m_targetAddress;
-        return nExtraCycles;
     }
 
     return 0x00;
@@ -404,12 +403,11 @@ uint8_t Cpu::OpBCS()
 {
     if (hasFlag(FlagIndex::Carry))
     {
-        uint8_t nExtraCycles = 1;
+        m_nWaitCycles++;
         if (isPageBreak(PC, m_targetAddress))
-            nExtraCycles ++;
+            m_nWaitCycles++;
         
         PC = m_targetAddress;
-        return nExtraCycles;
     }
 
     return 0x00;
@@ -418,12 +416,11 @@ uint8_t Cpu::OpBEQ()
 {
     if (hasFlag(FlagIndex::Zero))
     {
-        uint8_t nExtraCycles = 1;
+        m_nWaitCycles++;
         if (isPageBreak(PC, m_targetAddress))
-            nExtraCycles ++;
+            m_nWaitCycles++;
         
         PC = m_targetAddress;
-        return nExtraCycles;
     }
 
     return 0x00;
@@ -432,12 +429,11 @@ uint8_t Cpu::OpBMI()
 {
     if (hasFlag(FlagIndex::Negative))
     {
-        uint8_t nExtraCycles = 1;
+        m_nWaitCycles++;
         if (isPageBreak(PC, m_targetAddress))
-            nExtraCycles ++;
+            m_nWaitCycles++;
         
         PC = m_targetAddress;
-        return nExtraCycles;
     }
 
     return 0x00;
@@ -446,12 +442,11 @@ uint8_t Cpu::OpBNE()
 {
     if (!hasFlag(FlagIndex::Zero))
     {
-        uint8_t nExtraCycles = 1;
+        m_nWaitCycles++;
         if (isPageBreak(PC, m_targetAddress))
-            nExtraCycles ++;
+            m_nWaitCycles++;
         
         PC = m_targetAddress;
-        return nExtraCycles;
     }
 
     return 0x00;
@@ -460,12 +455,11 @@ uint8_t Cpu::OpBPL()
 {
     if (!hasFlag(FlagIndex::Negative))
     {
-        uint8_t nExtraCycles = 1;
+        m_nWaitCycles++;
         if (isPageBreak(PC, m_targetAddress))
-            nExtraCycles ++;
+            m_nWaitCycles++;
         
         PC = m_targetAddress;
-        return nExtraCycles;
     }
 
     return 0x00;
@@ -474,12 +468,11 @@ uint8_t Cpu::OpBVC()
 {
     if (!hasFlag(FlagIndex::Overflow))
     {
-        uint8_t nExtraCycles = 1;
+        m_nWaitCycles++;
         if (isPageBreak(PC, m_targetAddress))
-            nExtraCycles ++;
+            m_nWaitCycles++;
         
         PC = m_targetAddress;
-        return nExtraCycles;
     }
 
     return 0x00;
@@ -488,12 +481,11 @@ uint8_t Cpu::OpBVS()
 {
     if (hasFlag(FlagIndex::Overflow))
     {
-        uint8_t nExtraCycles = 1;
+        m_nWaitCycles++;
         if (isPageBreak(PC, m_targetAddress))
-            nExtraCycles ++;
+            m_nWaitCycles++;
         
         PC = m_targetAddress;
-        return nExtraCycles;
     }
 
     return 0x00;
@@ -558,7 +550,7 @@ uint8_t Cpu::OpBRK()
 uint8_t Cpu::OpNOP()
 {
     //do nothing
-    return 0x00;
+    return 0x01;
 }
 uint8_t Cpu::OpRTI()
 {

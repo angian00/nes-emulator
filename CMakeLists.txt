@@ -17,7 +17,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
 set(MAIN_SOURCES
     src/bus.cpp
     src/cartridge.cpp
-    src/instruction.cpp
+    src/instructions.cpp
     src/cpu.cpp
     src/cpu_opcodes.cpp
     src/cpu_addr_modes.cpp

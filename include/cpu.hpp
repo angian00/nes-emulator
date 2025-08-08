@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "instruction.hpp"
+#include "instructions.hpp"
 
 class Bus;
 

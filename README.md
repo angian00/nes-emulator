@@ -7,4 +7,5 @@ Trying my hand at implementing a NES emulator in C++.
 - https://github.com/christopherpow/nes-test-roms
 - https://www.nesdev.org/wiki/
 - https://www.nesdev.org/obelisk-6502-guide/
+- https://www.masswerk.at/6502/6502_instruction_set.html
 - https://austinmorlan.com/posts/nes_rendering_overview/

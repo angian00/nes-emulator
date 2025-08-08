@@ -1,4 +1,4 @@
-#include "instruction.hpp"
+#include "instructions.hpp"
 
 #include "cpu.hpp"
 
@@ -162,4 +162,36 @@ void initInstrLookupTable()
     instructionLookupTable[0xF9] = { "SBC", &Cpu::OpSBC, &Cpu::AddrABY, 4 };
     instructionLookupTable[0xFD] = { "SBC", &Cpu::OpSBC, &Cpu::AddrABX, 4 };
     instructionLookupTable[0xFE] = { "INC", &Cpu::OpINC, &Cpu::AddrABX, 7 };
+
+    //nops
+    instructionLookupTable[0x04] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZP0, 3 };
+    instructionLookupTable[0x0C] = { "NOP", &Cpu::OpNOP, &Cpu::AddrABS, 4 };
+    instructionLookupTable[0x14] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZPX, 4 };
+    instructionLookupTable[0x1A] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMP, 2 };
+    instructionLookupTable[0x1C] = { "NOP", &Cpu::OpNOP, &Cpu::AddrABX, 4 };
+    instructionLookupTable[0x34] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZPX, 4 };
+    instructionLookupTable[0x3A] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMP, 2 };
+    instructionLookupTable[0x3C] = { "NOP", &Cpu::OpNOP, &Cpu::AddrABX, 4 };
+    instructionLookupTable[0x44] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZP0, 3 };
+    instructionLookupTable[0x54] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZPX, 4 };
+    instructionLookupTable[0x5A] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMP, 2 };
+    instructionLookupTable[0x5C] = { "NOP", &Cpu::OpNOP, &Cpu::AddrABX, 4 };
+    instructionLookupTable[0x64] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZP0, 3 };
+    instructionLookupTable[0x74] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZPX, 4 };
+    instructionLookupTable[0x7A] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMP, 2 };
+    instructionLookupTable[0x7C] = { "NOP", &Cpu::OpNOP, &Cpu::AddrABX, 4 };
+    instructionLookupTable[0x80] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMM, 2 };
+    instructionLookupTable[0x82] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMM, 2 };
+    instructionLookupTable[0x89] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMM, 2 };
+    instructionLookupTable[0xC2] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMM, 2 };
+    instructionLookupTable[0xD4] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZPX, 4 };
+    instructionLookupTable[0xDA] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMP, 2 };
+    instructionLookupTable[0xDC] = { "NOP", &Cpu::OpNOP, &Cpu::AddrABX, 4 };
+    instructionLookupTable[0xE2] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMM, 2 };
+    instructionLookupTable[0xF4] = { "NOP", &Cpu::OpNOP, &Cpu::AddrZPX, 4 };
+    instructionLookupTable[0xFA] = { "NOP", &Cpu::OpNOP, &Cpu::AddrIMP, 2 };
+    instructionLookupTable[0xFC] = { "NOP", &Cpu::OpNOP, &Cpu::AddrABX, 4 };
+    
+    //illegal instructions
+
 }

@@ -154,3 +154,89 @@ Implied       PHA           $48  1   3
 Implied       PLA           $68  1   4
 Implied       PHP           $08  1   3
 Implied       PLP           $28  1   4
+
+
+#illegal opcodes (NMOS)
+Immediate     ALR #$44      $4B  2   2
+Immediate     ANC #$44      $0B  2   2
+Immediate     ANC #$44      $2B  2   2
+Immediate     ANE #$44      $8B  2   2
+Immediate     ARR #$44      $6B  2   2
+Zero Page     DCP $44       $C7  2   5
+Zero Page,X   DCP $4400,X   $D7  2   6
+Absolute      DCP $44       $CF  3   6
+Absolute,X    DCP $4400,X   $DF  3   7
+Absolute,Y    DCP $4400,Y   $DB  3   7
+Indirect,X    DCP ($44,X)   $C3  2   8
+Indirect,Y    DCP ($44),Y   $D3  2   8
+Zero Page     ISC $44       $E7  2   5
+Zero Page,X   ISC $4400,X   $F7  2   6
+Absolute      ISC $44       $EF  3   6
+Absolute,X    ISC $4400,X   $FF  3   7
+Absolute,Y    ISC $4400,Y   $FB  3   7
+Indirect,X    ISC ($44,X)   $E3  2   8
+Indirect,Y    ISC ($44),Y   $F3  2   8
+Absolute,Y    LAS $4400,Y   $BB  3   4
+Zero Page     LAX $44       $A7  2   3
+Zero Page,Y   LAX $4400,Y   $B7  2   4
+Absolute      LAX $44       $AF  3   4
+Absolute,Y    LAX $4400,Y   $BF  3   4
+Indirect,X    LAX ($44,X)   $A3  2   6
+Indirect,Y    LAX ($44),Y   $B3  2   5
+Immediate     LXA #$44      $AB  2   2
+Zero Page     RLA $44       $27  2   5
+Zero Page,X   RLA $4400,X   $37  2   6
+Absolute      RLA $44       $2F  3   6
+Absolute,X    RLA $4400,X   $3F  3   7
+Absolute,Y    RLA $4400,Y   $3B  3   7
+Indirect,X    RLA ($44,X)   $23  2   8
+Indirect,Y    RLA ($44),Y   $33  2   8
+Zero Page     RRA $44       $67  2   5
+Zero Page,X   RRA $4400,X   $77  2   6
+Absolute      RRA $44       $6F  3   6
+Absolute,X    RRA $4400,X   $7F  3   7
+Absolute,Y    RRA $4400,Y   $7B  3   7
+Indirect,X    RRA ($44,X)   $63  2   8
+Indirect,Y    RRA ($44),Y   $73  2   8
+Zero Page     SAX $44       $87  2   3
+Zero Page,Y   SAX $4400,Y   $97  2   4
+Absolute      SAX $44       $8F  3   4
+Indirect,X    SAX ($44,X)   $83  2   6
+Immediate     SBX #$44      $CB  2   2
+Absolute,Y    SHA $4400,Y   $9F  3   5
+Indirect,Y    SHA ($44),Y   $93  2   6
+Absolute,Y    SHX $4400,Y   $9E  3   5
+Absolute,X    SHY $4400,X   $9C  3   5
+Zero Page     SLO $44       $07  2   5
+Zero Page,X   SLO $4400,X   $17  2   6
+Absolute      SLO $44       $0F  3   6
+Absolute,X    SLO $4400,X   $1F  3   7
+Absolute,Y    SLO $4400,Y   $1B  3   7
+Indirect,X    SLO ($44,X)   $03  2   8
+Indirect,Y    SLO ($44),Y   $13  2   8
+Zero Page     SRE $44       $47  2   5
+Zero Page,X   SRE $4400,X   $57  2   6
+Absolute      SRE $44       $4F  3   6
+Absolute,X    SRE $4400,X   $5F  3   7
+Absolute,Y    SRE $4400,Y   $5B  3   7
+Indirect,X    SRE ($44,X)   $43  2   8
+Indirect,Y    SRE ($44),Y   $53  2   8
+Absolute,Y    TAS $4400,Y   $9B  3   5
+Accumulator   ROR A         $6A  1   2
+Zero Page     ROR $44       $66  2   5
+Zero Page,X   ROR $4400,X   $76  2   6
+Absolute      ROR $44       $6E  3   6
+Absolute,X    ROR $4400,X   $7E  3   7
+Relative      BRA $44       $80  2   3
+Implied       PLA           $FA  1   4
+Implied       PLA           $7A  1   4
+Implied       STP           $DB  1   3
+Zero Page     STZ $44       $64  2   3
+Zero Page,X   STZ $4400,X   $74  2   4
+Absolute      STZ $44       $9C  3   4
+Absolute,X    STZ $4400,X   $9E  3   4
+Absolute      TRB $44       $1C  3   6
+Zero Page     TRB $44       $14  2   5
+Absolute      TRB $44       $0C  3   6
+Zero Page     TRB $44       $04  2   5
+Implied       WAI           $CB  1   3
