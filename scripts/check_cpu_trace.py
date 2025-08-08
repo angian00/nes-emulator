@@ -23,18 +23,21 @@ def main():
         pc_ref = ref_line[0:4]
         opcode_ref = ref_line[16:19]
         registers_ref = ref_line[48:74]
+        cycles_ref = ref_line[86:]
+        
         #print(pc_ref, opcode_ref, registers_ref)
 
         log_line = log_lines[i_log]
         pc_log = log_line[0:4]
         opcode_log = log_line[16:19]
         registers_log = log_line[48:74]
+        cycles_log = log_line[86:]
 
         #print(pc_log, opcode_log, registers_log)
 
         print(f"{ref_line.strip()}")
 
-        if pc_log != pc_ref or opcode_log != opcode_ref or registers_log != registers_ref:
+        if pc_log != pc_ref or opcode_log != opcode_ref or registers_log != registers_ref or cycles_ref != cycles_log:
             print(f"!! Lines [{i_ref+1}] do not match:")
             print(f"log: {log_line.strip()}")
             print(f"ref: {ref_line.strip()}")

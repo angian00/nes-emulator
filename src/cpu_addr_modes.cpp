@@ -47,7 +47,8 @@ uint8_t Cpu::AddrREL()
         rel |= 0xFF00;
 
     m_targetAddress = PC + rel;
-    return 0x00;  //CHECK additional clock cycle
+
+    return 0x00;
 }
 
 uint8_t Cpu::AddrABS()

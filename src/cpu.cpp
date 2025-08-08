@@ -19,7 +19,8 @@ void Cpu::reset()
     uint16_t hi = m_bus->read(0xFFFD);
     PC = (hi << 8) | lo;
     
-    m_nWaitCycles = 8;
+    //m_nWaitCycles = 8;
+    m_nWaitCycles = 7;
     m_nProcessedInstr = 0;
     m_nTotCycles = 0;
 }
@@ -93,7 +94,7 @@ void Cpu::clock()
         m_currAddrMode = instr.addrmode;
         uint8_t extraCycles1 = (this->*instr.addrmode)();
         uint8_t extraCycles2 = (this->*instr.operate)();  
-        //m_nWaitCycles += (extraCycles1 & extraCycles2);
+        m_nWaitCycles += extraCycles1 + extraCycles2;
     }
 
     m_nWaitCycles--;

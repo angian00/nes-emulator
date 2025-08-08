@@ -10,6 +10,9 @@
 //---- opcode implementation ----
 // see https://www.nesdev.org/obelisk-6502-guide/instructions.html
 
+
+bool isPageBreak(uint16_t addr1, uint16_t addr2);
+
 //-- Load/Store --
 uint8_t Cpu::OpLDA()
 {
@@ -385,58 +388,119 @@ uint8_t Cpu::OpRTS()
 uint8_t Cpu::OpBCC()
 {
     if (!hasFlag(FlagIndex::Carry))
+    {
+        uint8_t nExtraCycles = 1;
+        if (isPageBreak(PC, m_targetAddress))
+            nExtraCycles ++;
+        
         PC = m_targetAddress;
+        return nExtraCycles;
+    }
 
     return 0x00;
 }
 uint8_t Cpu::OpBCS()
 {
     if (hasFlag(FlagIndex::Carry))
+    {
+        uint8_t nExtraCycles = 1;
+        if (isPageBreak(PC, m_targetAddress))
+            nExtraCycles ++;
+        
         PC = m_targetAddress;
+        return nExtraCycles;
+    }
 
     return 0x00;
 }
 uint8_t Cpu::OpBEQ()
 {
     if (hasFlag(FlagIndex::Zero))
+    {
+        uint8_t nExtraCycles = 1;
+        if (isPageBreak(PC, m_targetAddress))
+            nExtraCycles ++;
+        
         PC = m_targetAddress;
+        return nExtraCycles;
+    }
 
     return 0x00;
 }
 uint8_t Cpu::OpBMI()
 {
     if (hasFlag(FlagIndex::Negative))
+    {
+        uint8_t nExtraCycles = 1;
+        if (isPageBreak(PC, m_targetAddress))
+            nExtraCycles ++;
+        
         PC = m_targetAddress;
+        return nExtraCycles;
+    }
 
     return 0x00;
 }
 uint8_t Cpu::OpBNE()
 {
     if (!hasFlag(FlagIndex::Zero))
+    {
+        uint8_t nExtraCycles = 1;
+        if (isPageBreak(PC, m_targetAddress))
+            nExtraCycles ++;
+        
         PC = m_targetAddress;
+        return nExtraCycles;
+    }
 
     return 0x00;
 }
 uint8_t Cpu::OpBPL()
 {
     if (!hasFlag(FlagIndex::Negative))
+    {
+        uint8_t nExtraCycles = 1;
+        if (isPageBreak(PC, m_targetAddress))
+            nExtraCycles ++;
+        
         PC = m_targetAddress;
+        return nExtraCycles;
+    }
 
     return 0x00;
 }
 uint8_t Cpu::OpBVC()
 {
     if (!hasFlag(FlagIndex::Overflow))
+    {
+        uint8_t nExtraCycles = 1;
+        if (isPageBreak(PC, m_targetAddress))
+            nExtraCycles ++;
+        
         PC = m_targetAddress;
+        return nExtraCycles;
+    }
 
     return 0x00;
 }
 uint8_t Cpu::OpBVS()
 {
     if (hasFlag(FlagIndex::Overflow))
+    {
+        uint8_t nExtraCycles = 1;
+        if (isPageBreak(PC, m_targetAddress))
+            nExtraCycles ++;
+        
         PC = m_targetAddress;
+        return nExtraCycles;
+    }
 
     return 0x00;
+}
+
+bool isPageBreak(uint16_t addr1, uint16_t addr2)
+{
+    return ((addr1 & 0xff00) != (addr2 & 0xff00));
 }
 
 //-- Status Flag Changes --
