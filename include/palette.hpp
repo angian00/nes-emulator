@@ -2,4 +2,4 @@
 
 #include <cstdint>
 
-extern uint8_t PALETTE[];
+extern uint8_t PALETTE_COLORS[];

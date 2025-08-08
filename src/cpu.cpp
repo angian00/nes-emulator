@@ -6,6 +6,13 @@
 #include <print>
 
 
+
+bool isPageBreak(uint16_t addr1, uint16_t addr2)
+{
+    return ((addr1 & 0xff00) != (addr2 & 0xff00));
+}
+
+
 void Cpu::reset()
 {
     A = 0x00;

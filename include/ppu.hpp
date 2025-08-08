@@ -32,6 +32,8 @@ public:
     static const int SCREEN_WIDTH  = 256;
     static const int SCREEN_HEIGHT = 240;
     static const uint16_t INTERNAL_RAM_SIZE = 0x800;
+    static const uint16_t START_PALETTE_RAM = 0x3F00;
+    static const uint16_t PALETTE_RAM_SIZE = 0x20;
 
     Ppu() {  };
     const uint8_t *pixels() { return m_frameBuffer; }
@@ -59,23 +61,29 @@ private:
     uint8_t m_frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT] = {};
     uint8_t m_internalRam[INTERNAL_RAM_SIZE] = {};
     
+    uint8_t m_paletteRam[PALETTE_RAM_SIZE] = {};
+
     uint16_t m_scanline;
     uint16_t m_dot;
     bool m_frameComplete;
     bool m_oddFrame = false;
     
     //shift registers
-    uint16_t m_shiftHi;
-    uint16_t m_shiftLo;
+    uint16_t m_patternShiftHi;
+    uint16_t m_patternShiftLo;
+    uint16_t m_attrShiftHi;
+    uint16_t m_attrShiftLo;
 
     //internal latches?
     uint8_t m_ntEntry;
     uint8_t m_attrEntry;
+    uint8_t m_ppuDataBuffer;
 
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
+    bool isPaletteAddress(uint16_t addr);
     
-    uint16_t currentTileOffset();
+    uint16_t ntDataOffset();
     uint8_t currentFineY();
     void incrementCoarseX();
     void incrementY();

@@ -11,8 +11,6 @@
 // see https://www.nesdev.org/obelisk-6502-guide/instructions.html
 
 
-bool isPageBreak(uint16_t addr1, uint16_t addr2);
-
 //-- Load/Store --
 uint8_t Cpu::OpLDA()
 {
@@ -301,6 +299,8 @@ uint8_t Cpu::OpLSR()
         write(m_targetAddress, value);
     }
 
+    setFlag(FlagIndex::Negative, 0x0);
+
     return 0x00;
 }
 uint8_t Cpu::OpROL()
@@ -372,14 +372,15 @@ uint8_t Cpu::OpJMP()
 uint8_t Cpu::OpJSR()
 {
     PC = PC - 1;
-    pushStack(PC & 0xff);
     pushStack((PC >> 8)& 0xff);
+    pushStack(PC & 0xff);
     PC = m_targetAddress;
     return 0x00;
 }
 uint8_t Cpu::OpRTS()
 {
-    PC = (popStack() << 8) + popStack();
+    //PC = (popStack() << 8) + popStack();
+    PC = popStack() + (popStack() << 8);
     PC ++;
     return 0x00;
 }
@@ -498,10 +499,6 @@ uint8_t Cpu::OpBVS()
     return 0x00;
 }
 
-bool isPageBreak(uint16_t addr1, uint16_t addr2)
-{
-    return ((addr1 & 0xff00) != (addr2 & 0xff00));
-}
 
 //-- Status Flag Changes --
 uint8_t Cpu::OpCLC()
@@ -565,7 +562,11 @@ uint8_t Cpu::OpNOP()
 }
 uint8_t Cpu::OpRTI()
 {
-    P = popStack();
+    uint8_t Pnew = popStack();
+    assignBits(&P, Pnew, 0, 0, 4);
+    assignBits(&P, Pnew, 6, 6, 2);
+
+    //P |= 0b0010000;
     uint16_t lo = popStack();
     uint16_t hi = popStack();
     PC = (hi << 8) | lo;

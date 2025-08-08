@@ -94,11 +94,17 @@ uint8_t Cpu::AddrIND()
     uint16_t hi1 = read(PC++);
     uint16_t addr1 = ((hi1 << 8) | lo1);
 
-    uint16_t lo2 = read(addr1++);
+    uint16_t lo2 = read(addr1);
+    addr1 ++;
+    //replicate a know 6502 CPU bug
+    if ((addr1 & 0xFF) == 0x00)
+        addr1 -= 0x100;
+    //
+
     uint16_t hi2 = read(addr1);
     m_targetAddress = ((hi2 << 8) | lo2);
 
-    //TODO: check additional clock cycle
+    //m_targetAddress = ((hi1 << 8) | lo1);
 
     return 0x00;
 }
@@ -120,10 +126,10 @@ uint8_t Cpu::AddrIZY()
     uint16_t addr1 = ll;
 
     uint16_t lo2 = read(addr1++);
-    uint16_t hi2 = read(addr1);
+    uint16_t hi2 = read(addr1 % 256);
     m_targetAddress = ((hi2 << 8) | lo2) + Y;
-    //TODO: check additional clock cycle
+
     
-    return 0x00;
+    return (isPageBreak(hi2 << 8, m_targetAddress) ? 0x01 : 0x00); //TODO: differentiate per STA vs LDA
 }
 

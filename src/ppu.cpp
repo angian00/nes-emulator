@@ -14,8 +14,7 @@ static const uint16_t ATTR_TABLE_OFFSET = 0xC0;
     
 static uint8_t wTiles = 32;
 static uint8_t hTiles = 30;
-static const uint8_t iNameTable = 0; //TODO: support multiple nametables
-static const uint16_t startNameTable = START_NAME_TABLES + iNameTable * NAME_TABLE_SIZE;
+
 
 void Ppu::reset()
 {
@@ -48,7 +47,27 @@ uint8_t Ppu::readRegister(Register reg)
     // side-effects on internal registers
     // see https://www.nesdev.org/wiki/PPU_scrolling#Summary
     if (reg == Register::PPUSTATUS)
-            m_internalRegisterW = 0x00;
+    {
+        m_internalRegisterW = 0x00;
+    }
+    else if (reg == Register::PPUDATA)
+    {
+        uint8_t value;
+
+        if (isPaletteAddress(m_internalRegisterV))
+            value = read(m_internalRegisterV);
+        else {
+            uint8_t value = m_ppuDataBuffer;
+            m_ppuDataBuffer = read(m_internalRegisterV);
+        }
+        
+        if (m_registers[Register::PPUCTRL] & 0x04)
+            m_internalRegisterV += 32;
+        else
+            m_internalRegisterV ++;
+
+        return value;
+    }
 
     return m_registers[reg];
 }
@@ -98,6 +117,14 @@ void Ppu::writeRegister(Register reg, uint8_t value)
             m_internalRegisterW = 0x00;
         }
     }
+    else if (reg == Register::PPUDATA)
+    {
+        write(m_internalRegisterV, value);
+        if (m_registers[Register::PPUCTRL] & 0x04)
+            m_internalRegisterV += 32;
+        else
+            m_internalRegisterV ++;
+    }
 }
 
 
@@ -110,8 +137,8 @@ uint8_t Ppu::read(uint16_t addr)
 
     if (addr >= 0x3F00)
     {
-        //TODO: palette ram indexes
-        return 0x00;
+        //access palette ram
+        return m_paletteRam[(addr - 0x3F00) % PALETTE_RAM_SIZE];
     }
 
     if (addr >= 0x2000)
@@ -139,7 +166,10 @@ void Ppu::write(uint16_t addr, uint8_t value)
 
     if (addr >= 0x3F00)
     {
-        //TODO: palette ram indexes
+        //access palette ram
+        std::println("write access to palette RAM; addr={:04X}, value={:02X}", addr, value);
+        //TODO: peculiar behaviour where palette index is shared between background and sprites
+        m_paletteRam[(addr - 0x3F00) % PALETTE_RAM_SIZE] = value;
         return;
     }
 
@@ -154,6 +184,11 @@ void Ppu::write(uint16_t addr, uint8_t value)
     throw std::runtime_error("invalid write access to ROM");
 }
 
+bool Ppu::isPaletteAddress(uint16_t addr)
+{
+    return ( (addr >= 0x3F00) && (addr < 0x4000) );
+
+}
 
 
 void Ppu::clock()
@@ -201,8 +236,7 @@ void Ppu::clock()
             case 1:
             {
                 //NT (first)
-                uint16_t ntIndex = currentTileOffset();
-                m_ntEntry = read(startNameTable + ntIndex);
+                m_ntEntry = read(START_NAME_TABLES + ntDataOffset());
                 break;
             }
             case 2:
@@ -214,6 +248,7 @@ void Ppu::clock()
                 //AT (first)
                 uint16_t attrTableIndex = 0x00; //TODO
                 //m_attrEntry = read(startNameTable + ATTR_TABLE_OFFSET + attrTableIndex);
+                //assignBits(&m_attrShiftLo, m_attrEntry, 0, 0, 1);
                 break;
             }
             case 4:
@@ -224,7 +259,7 @@ void Ppu::clock()
             {
                 //BG lsbits (first)
                 uint8_t rowDataPlane1 = read(m_ntEntry + currentFineY());
-                assignBits(&m_shiftLo, rowDataPlane1, 0, 0, 1);
+                assignBits(&m_patternShiftLo, rowDataPlane1, 0, 0, 1);
                 break;
             }
             case 6:
@@ -235,7 +270,7 @@ void Ppu::clock()
             {
                 //BG msbits (first?)
                 uint8_t rowDataPlane2 = read(m_ntEntry + currentFineY() + 8);
-                assignBits(&m_shiftHi, rowDataPlane2, 0, 0, 1);
+                assignBits(&m_patternShiftHi, rowDataPlane2, 0, 0, 1);
                 break;
             }
         }
@@ -325,13 +360,9 @@ void Ppu::clock()
 //     }
 // }
 
-uint16_t Ppu::currentTileOffset()
+uint16_t Ppu::ntDataOffset()
 {
-    //CHECK currentTileOffset
-    uint16_t coarseX = (m_internalRegisterV & 0x1F);
-    uint16_t coarseY = (m_internalRegisterV >> 5) & 0x1F;
-    return coarseX*wTiles + coarseY;
-    //return (m_internalRegisterV & 0xFFF);
+    return (m_internalRegisterV & 0xFFF);
 }
 
 uint8_t Ppu::currentFineY()
@@ -398,25 +429,35 @@ void Ppu::renderPixel()
 {
     int bit = 0x8000 >> (m_dot % 8);
 
-    uint8_t pixel_lo = (m_shiftHi & bit) ? 1 : 0;
-    uint8_t pixel_hi = (m_shiftLo & bit) ? 1 : 0;
-    uint8_t pixel = (pixel_hi << 1) | pixel_lo;
+    uint8_t pixelLo = (m_patternShiftHi & bit) ? 1 : 0;
+    uint8_t pixelHi = (m_patternShiftLo & bit) ? 1 : 0;
+    uint8_t pixel = (pixelHi << 1) | pixelLo;
 
-    // uint8_t attr_lo = (attribute_shift_low & bit) ? 1 : 0;
-    // uint8_t attr_hi = (attribute_shift_high & bit) ? 1 : 0;
-    // uint8_t palette = (attr_hi << 1) | attr_lo;
+    uint8_t attrLo = (m_attrShiftLo & bit) ? 1 : 0;
+    uint8_t attrHi = (m_attrShiftHi & bit) ? 1 : 0;
+    uint8_t palette = (attrHi << 1) | attrLo;
 
-    // uint8_t color = ppuRead(0x3F00 + (palette << 2) + pixel);
+    // 4bit0
+    // -----
+    // SAAPP
+    // |||||
+    // |||++- Pixel value from tile pattern data
+    // |++--- Palette number from attributes
+    // +----- Background/Sprite select
 
-    //m_frameBuffer[m_scanline][cycle - 1] = systemPalette[color]
-    m_frameBuffer[SCREEN_HEIGHT * (m_dot - 1) + m_scanline] = pixel;
+    uint8_t colorIndex = read(START_PALETTE_RAM + (palette << 2) + pixel);
+    //uint8_t colorIndex = 1;
+
+    m_frameBuffer[SCREEN_HEIGHT * (m_dot - 1) + m_scanline] = colorIndex;
 }
 
 
 void Ppu::updateShiftRegisters()
 {
-    m_shiftHi <<= 1;
-    m_shiftLo <<= 1;
+    m_patternShiftHi <<= 1;
+    m_patternShiftLo <<= 1;
+    m_attrShiftHi <<= 1;
+    m_attrShiftLo <<= 1;
 }
 
 void Ppu::dumpFrameBuffer()

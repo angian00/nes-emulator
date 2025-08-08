@@ -45,8 +45,6 @@ int main(int argc, char* argv[])
     bus->cpu()->setTracing(true);
 
 
-    //bus->ppu()->testNameTables();
-    
     // Main loop
     bool running = true;
     while (running) {

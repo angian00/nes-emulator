@@ -59,7 +59,7 @@ void Display::shutdownSdl()
 
 void Display::clear()
 {
-    uint8_t* color = (uint8_t*)PALETTE;
+    uint8_t* color = (uint8_t*)PALETTE_COLORS;
     SDL_SetRenderDrawColor(renderer, color[0], color[1], color[2], color[3]);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
@@ -75,7 +75,7 @@ void Display::render(const uint8_t *pixels)
         for (auto y=0; y < Ppu::SCREEN_WIDTH; y++)
         {
             uint8_t colorIndex = pixels[x*Ppu::SCREEN_HEIGHT + y];
-            uint8_t* color = PALETTE + 4*colorIndex;
+            uint8_t* color = PALETTE_COLORS + 4*colorIndex;
             //uint8_t * color = PALETTE;
             SDL_SetRenderDrawColor(renderer, color[0], color[1], color[2], color[3]);
 

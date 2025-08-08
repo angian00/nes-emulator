@@ -29,6 +29,8 @@ enum FlagIndex {
 };
 
 
+bool isPageBreak(uint16_t addr1, uint16_t addr2);
+
 class Cpu
 {
     friend struct Instruction; 
