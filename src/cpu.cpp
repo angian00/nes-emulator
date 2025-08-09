@@ -91,8 +91,8 @@ void Cpu::clock()
             //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
             std::string opcodeBytes = "";
             std::string args = "";
-            uint8_t scanline = m_bus->ppu()->scanline();
-            uint8_t dot = m_bus->ppu()->dot();
+            uint16_t scanline = m_bus->ppu()->scanline();
+            uint16_t dot = m_bus->ppu()->dot();
             //std::print("{:04X}  {:9s} {} {:27s} ", PC-1, opcodeBytes, instr.name == "???" ? "NOP" : instr.name, args);
             std::print("{:04X}  {:9s} {} {:27s} ", PC-1, opcodeBytes, instr.name, args);
             std::print("A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} ", A, X, Y, P, SP);

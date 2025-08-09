@@ -72,7 +72,7 @@ void Display::render(const uint8_t *pixels)
 
     for (auto x=0; x < Ppu::SCREEN_WIDTH; x++)
     {
-        for (auto y=0; y < Ppu::SCREEN_WIDTH; y++)
+        for (auto y=0; y < Ppu::SCREEN_HEIGHT; y++)
         {
             uint8_t colorIndex = pixels[x*Ppu::SCREEN_HEIGHT + y];
             uint8_t* color = PALETTE_COLORS + 4*colorIndex;
@@ -81,7 +81,6 @@ void Display::render(const uint8_t *pixels)
 
             SDL_Rect rect(x*SCALE_FACTOR, y*SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
             SDL_RenderFillRect(renderer, &rect);
-
         }
     }
     

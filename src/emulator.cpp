@@ -41,19 +41,21 @@ int main(int argc, char* argv[])
     Keyboard* keyboard = new Keyboard();
     
     
-    bus->cpu()->setPC(0xC000); //automation mode
+    //bus->cpu()->setPC(0xC000); //automation mode
     bus->cpu()->setTracing(true);
 
+    bus->ppu()->fillDummyNameTable();
+    bus->ppu()->testNameTables();
 
     // Main loop
     bool running = true;
     while (running) {
-        bus->cpu()->clock();
+        // bus->cpu()->clock();
 
-        //PPU clock is 3x CPU clock
-        for (int i=0; i < 3; ++i)
-            bus->ppu()->clock();
-        
+        // //PPU clock is 3x CPU clock
+        // for (int i=0; i < 3; ++i)
+        //     bus->ppu()->clock();
+                
 
         if (bus->ppu()->isFrameComplete()) {
             display->render(bus->ppu()->frameBuffer());

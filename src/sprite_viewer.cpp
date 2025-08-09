@@ -16,8 +16,6 @@ static const int SCREEN_HEIGHT = 300;
 
 static const uint16_t PTABLE_SIZE = 0x1000;
 static const uint16_t START_NAME_TABLES = 0x2000;
-static const uint16_t NAME_TABLE_SIZE = 0x400;
-static const uint16_t ATTRIBUTE_TABLE_OFFSET = 0xC0;
 
 const uint8_t COLOR_BKG[] = { 0x00, 0x00, 0x00, 0xff };
 const uint8_t COLOR_1[]   = { 0xcc, 0x00, 0x00, 0xff };
@@ -39,8 +37,6 @@ void refresh();
 
 void loadPatternTable(Cartridge* cart, uint8_t (&pixels)[PTABLE_WIDTH][PTABLE_HEIGHT], PatternTableIndex iPTable);
 void renderPatternTable(uint8_t (&pixels)[PTABLE_WIDTH][PTABLE_HEIGHT], PatternTableIndex iPTable);
-void loadNameTable(Cartridge* cart, uint8_t (&pixels)[SCREEN_WIDTH][SCREEN_HEIGHT], uint8_t iNameTable);
-void renderNameTable(uint8_t (&pixels)[SCREEN_WIDTH][SCREEN_HEIGHT]);
 
 void loadPTableTile(Cartridge* cart, uint8_t iChrBlock, PatternTableIndex iPTable, uint16_t tileOffset, uint8_t* pixels);
 
@@ -67,23 +63,12 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    auto showPatternTable = false;
-    if (showPatternTable)
-    {
-        uint8_t pixels[PTABLE_WIDTH][PTABLE_HEIGHT] = {};
-    
-        loadPatternTable(cart, pixels, PatternTableIndex::Left);
-        renderPatternTable(pixels, PatternTableIndex::Left);
-        loadPatternTable(cart, pixels, PatternTableIndex::Right);
-        renderPatternTable(pixels, PatternTableIndex::Right);
-    }
-    else 
-    {
-        uint8_t pixels[SCREEN_WIDTH][SCREEN_HEIGHT] = {};
-    
-        loadNameTable(cart, pixels, 0);
-        renderNameTable(pixels);
-    }
+    uint8_t pixels[PTABLE_WIDTH][PTABLE_HEIGHT] = {};
+
+    loadPatternTable(cart, pixels, PatternTableIndex::Left);
+    renderPatternTable(pixels, PatternTableIndex::Left);
+    loadPatternTable(cart, pixels, PatternTableIndex::Right);
+    renderPatternTable(pixels, PatternTableIndex::Right);
 
     bool running = true;
     SDL_Event e;
@@ -238,86 +223,6 @@ void renderPatternTable(uint8_t (&pixels)[PTABLE_WIDTH][PTABLE_HEIGHT], PatternT
             SDL_SetRenderDrawColor(renderer, newColor[0], newColor[1], newColor[2], newColor[3]);
 
             SDL_Rect rect((iPTable*PTABLE_WIDTH + x)*SCALE_FACTOR, y*SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
-            SDL_RenderFillRect(renderer, &rect);
-        }
-    }
-
-    SDL_RenderPresent(renderer);
-}
-
-
-void loadNameTable(Cartridge* cart, uint8_t (&pixels)[SCREEN_WIDTH][SCREEN_HEIGHT], uint8_t iNameTable)
-{
-    assert(iNameTable < 4);
-
-    static int iChrBlock = 0;
-    static PatternTableIndex iPTable = PatternTableIndex::Right;
-    uint16_t attrTableIndex =  0x00;
-
-    uint16_t startNameTable = START_NAME_TABLES + iNameTable * NAME_TABLE_SIZE;
-    
-    static uint8_t wTiles = 32;
-    static uint8_t hTiles = 30;
-
-    uint8_t attributes = cart->chrData(iChrBlock, startNameTable + ATTRIBUTE_TABLE_OFFSET + attrTableIndex);
-    for (uint8_t xTile; xTile < wTiles; xTile++)
-    {
-        for (uint8_t yTile; yTile < hTiles; yTile++)
-        {
-            //uint16_t nametableEntry = cart->chrData(iChrBlock, startNameTable + yTile*hTiles + xTile);
-            uint16_t nametableEntry = cart->chrData(iChrBlock, startNameTable + xTile*wTiles + yTile);
-            //uint8_t nametableEntry = 0x00;
-            if (nametableEntry != 0)
-                std::println("loadNameTable; xTile={}, yTile={}; nametableEntry={:04X}", 
-                xTile, yTile, nametableEntry);
-
-            uint16_t pTableOffset = nametableEntry << 4;
-
-            uint8_t tilePixels[8*8];
-            loadPTableTile(cart, iChrBlock, iPTable, nametableEntry, tilePixels);
-
-            for (auto dy=0; dy < 8; dy++)
-            {
-                auto yPixel = yTile*8 + dy;
-                for (auto dx=0; dx < 8; dx++)
-                {
-                    auto xPixel = xTile*8 + dx;
-                    pixels[xPixel][yPixel] = tilePixels[dx*8 + dy];
-                }
-            }
-        }
-    }
-}
-
-
-void renderNameTable(uint8_t (&pixels)[SCREEN_WIDTH][SCREEN_HEIGHT])
-{
-    for (auto x=0; x < SCREEN_WIDTH; x++)
-    {
-        for (auto y=0; y < SCREEN_HEIGHT; y++)
-        {
-            uint8_t* newColor;
-            switch (pixels[x][y]) {
-                case 0x00:
-                    newColor = (uint8_t *)COLOR_BKG;
-                    break;
-                case 0x01:
-                    newColor = (uint8_t *)COLOR_1;
-                    break;
-                case 0x02:
-                    newColor = (uint8_t *)COLOR_2;
-                    break;
-                case 0x03:
-                    newColor = (uint8_t *)COLOR_3;
-                    break;
-                default:
-                    newColor = (uint8_t *)COLOR_KO;
-                    break;
-            }
-            
-            SDL_SetRenderDrawColor(renderer, newColor[0], newColor[1], newColor[2], newColor[3]);
-
-            SDL_Rect rect(x*SCALE_FACTOR, y*SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
             SDL_RenderFillRect(renderer, &rect);
         }
     }

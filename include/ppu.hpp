@@ -32,16 +32,14 @@ public:
     static const int SCREEN_WIDTH  = 256;
     static const int SCREEN_HEIGHT = 240;
     static const uint16_t INTERNAL_RAM_SIZE = 0x800;
-    static const uint16_t START_PALETTE_RAM = 0x3F00;
     static const uint16_t PALETTE_RAM_SIZE = 0x20;
 
     Ppu() {  };
-    uint8_t dot() { return m_dot; }
-    uint8_t scanline() { return m_scanline; }
+    uint16_t dot() { return m_dot; }
+    uint16_t scanline() { return m_scanline; }
     const uint8_t *frameBuffer() { return m_frameBuffer; }
     uint8_t readRegister(Register reg);
     void writeRegister(Register reg, uint8_t value);
-    uint8_t peekRegister(Register reg);
 
     void connect(Bus* bus) { m_bus = bus; }
     void reset();
@@ -50,6 +48,7 @@ public:
     void clearFrameComplete() { m_frameComplete = false; }
 
     void testNameTables();
+    void fillDummyNameTable();
 
 private:
     Bus* m_bus;
@@ -61,8 +60,8 @@ private:
     uint8_t  m_internalRegisterW = 0x00;
 
     uint8_t m_frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT] = {};
+
     uint8_t m_internalRam[INTERNAL_RAM_SIZE] = {};
-    
     uint8_t m_paletteRam[PALETTE_RAM_SIZE] = {};
 
     uint16_t m_scanline;
