@@ -119,6 +119,15 @@ public:
     uint8_t OpTXS();
     uint8_t OpTYA();
 
+    uint8_t OpLAX();
+    uint8_t OpSAX();
+    uint8_t OpDCP();
+    uint8_t OpISB();
+    uint8_t OpSLO();
+    uint8_t OpRLA();
+    uint8_t OpSRE();
+    uint8_t OpRRA();
+
 
 private:
     Bus* m_bus;

@@ -32,7 +32,8 @@ void Ppu::reset()
     m_internalRegisterW = 0x00;
 
     m_dot = 0;
-    m_scanline = 261;
+    //m_scanline = 261;
+    m_scanline = 0;
     m_frameComplete = false;
     m_oddFrame = false;
 }

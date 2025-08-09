@@ -36,7 +36,9 @@ public:
     static const uint16_t PALETTE_RAM_SIZE = 0x20;
 
     Ppu() {  };
-    const uint8_t *pixels() { return m_frameBuffer; }
+    uint8_t dot() { return m_dot; }
+    uint8_t scanline() { return m_scanline; }
+    const uint8_t *frameBuffer() { return m_frameBuffer; }
     uint8_t readRegister(Register reg);
     void writeRegister(Register reg, uint8_t value);
     uint8_t peekRegister(Register reg);

@@ -194,7 +194,7 @@ uint8_t Cpu::OpCMP()
     int16_t res = A - read(m_targetAddress);
     setFlag(FlagIndex::Carry,    res >= 0x00);
     setFlag(FlagIndex::Zero,     res == 0x00);
-    setFlag(FlagIndex::Negative, res  & 0xff80);
+    setFlag(FlagIndex::Negative, res  & 0x80);
     return 0x01;
 }
 uint8_t Cpu::OpCPX()
@@ -202,7 +202,7 @@ uint8_t Cpu::OpCPX()
     int16_t res = X - read(m_targetAddress);
     setFlag(FlagIndex::Carry,    res >= 0x00);
     setFlag(FlagIndex::Zero,     res == 0x00);
-    setFlag(FlagIndex::Negative, res & 0xff80);
+    setFlag(FlagIndex::Negative, res  & 0x80);
     return 0x00;
 }
 uint8_t Cpu::OpCPY()
@@ -210,7 +210,7 @@ uint8_t Cpu::OpCPY()
     int16_t res = Y - read(m_targetAddress);
     setFlag(FlagIndex::Carry,    res >= 0x00);
     setFlag(FlagIndex::Zero,     res == 0x00);
-    setFlag(FlagIndex::Negative, res & 0xff80);
+    setFlag(FlagIndex::Negative, res  & 0x80);
     return 0x00;
 }
 
@@ -566,3 +566,138 @@ uint8_t Cpu::OpRTI()
     return 0x00;
 }
 
+//-- Illegal Opcodes --
+uint8_t Cpu::OpLAX()
+{
+    //LDA + LDX
+    A = read(m_targetAddress);
+    X = A;
+    setFlag(FlagIndex::Zero,     A == 0x00);
+    setFlag(FlagIndex::Negative, A & 0x80);
+
+    return 0x01;
+}
+
+uint8_t Cpu::OpSAX()
+{
+    write(m_targetAddress, A & X);
+    return 0x01;
+}
+
+uint8_t Cpu::OpDCP()
+{
+    //DEC + CMP
+    uint8_t value = read(m_targetAddress) - 1;
+    int16_t res = A - value;
+    write(m_targetAddress, value);
+
+    setFlag(FlagIndex::Carry,    res >= 0x00);
+    setFlag(FlagIndex::Zero,     res == 0x00);
+    setFlag(FlagIndex::Negative, res  & 0x80);
+
+    return 0x00;
+}
+
+uint8_t Cpu::OpISB()
+{
+    //INC + SBC
+    uint8_t value = read(m_targetAddress) + 1;
+    uint16_t res = A - value - (hasFlag(FlagIndex::Carry) ? 0x0: 0x1);
+
+    uint8_t Aout = (res & 0xFF);
+    bool overflowOut = (Aout ^ A) & (Aout ^ (~value)) & 0x80;
+
+    A = Aout;
+    write(m_targetAddress, value);
+
+    setFlag(FlagIndex::Carry,    !(res >= 0x0100));
+    setFlag(FlagIndex::Zero,     A == 0x00);
+    setFlag(FlagIndex::Negative, A  & 0x80);
+    setFlag(FlagIndex::Overflow, overflowOut);
+
+    return 0x00;
+}
+
+uint8_t Cpu::OpSLO()
+{
+    //ASL + ORA
+    uint8_t value = read(m_targetAddress);
+    setFlag(FlagIndex::Carry, value & 0x80);
+    value <<= 1;
+    
+    A = A | value;
+    write(m_targetAddress, value);
+
+    setFlag(FlagIndex::Zero,     A == 0x00);
+    setFlag(FlagIndex::Negative, A  & 0x80);
+
+    return 0x00;
+}
+
+uint8_t Cpu::OpRLA()
+{
+    //ROL + AND
+    uint8_t oldCarry = hasFlag(FlagIndex::Carry);
+    uint8_t value = read(m_targetAddress);
+
+    setFlag(FlagIndex::Carry, value & 0x80);
+    value <<= 1;
+    if (oldCarry)
+        value |= 0x01;
+    else
+        value &= (~0x01);
+
+    A = A & value;
+    write(m_targetAddress, value);
+    
+    setFlag(FlagIndex::Zero,     A == 0x00);
+    setFlag(FlagIndex::Negative, A  & 0x80);
+
+    return 0x00;
+}
+
+uint8_t Cpu::OpSRE()
+{
+    //LSR + EOR
+    uint8_t value = read(m_targetAddress);
+    setFlag(FlagIndex::Carry, value & 0x01);
+    value >>= 1;
+ 
+    A = A ^ value;
+    write(m_targetAddress, value);
+
+    setFlag(FlagIndex::Zero,     A == 0x00);
+    setFlag(FlagIndex::Negative, A  & 0x80);
+
+    return 0x00;
+}
+
+uint8_t Cpu::OpRRA()
+{
+    //ROR + ADC
+    uint8_t oldCarry = hasFlag(FlagIndex::Carry);
+
+    uint8_t value = read(m_targetAddress);
+    uint8_t memCarry = value & 0x01;
+
+    value >>= 1;
+    if (oldCarry)
+        value |= 0x80;
+    else
+        value &= (~0x80);
+
+    uint16_t res = A + value + (memCarry ? 0x1: 0x0);
+    
+    uint8_t Aout = (res & 0xFF);
+    bool overflowOut = (Aout ^ A) & (Aout ^ value) & 0x80;
+
+    A = Aout;
+    write(m_targetAddress, value);
+    
+    setFlag(FlagIndex::Carry,  res >= 0x0100);
+    setFlag(FlagIndex::Zero,     A == 0x00);
+    setFlag(FlagIndex::Negative, A  & 0x80);
+    setFlag(FlagIndex::Overflow, overflowOut);
+
+    return 0x00;
+}

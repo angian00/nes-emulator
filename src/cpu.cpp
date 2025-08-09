@@ -91,11 +91,12 @@ void Cpu::clock()
             //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
             std::string opcodeBytes = "";
             std::string args = "";
-            uint8_t ppu1 = m_bus->ppu()->peekRegister(Ppu::Register::PPUCTRL);
-            uint8_t ppu2 = m_bus->ppu()->peekRegister(Ppu::Register::PPUDATA);
-            std::print("{:04X}  {:9s} {} {:27s} ", PC-1, opcodeBytes, instr.name == "???" ? "NOP" : instr.name, args);
+            uint8_t scanline = m_bus->ppu()->scanline();
+            uint8_t dot = m_bus->ppu()->dot();
+            //std::print("{:04X}  {:9s} {} {:27s} ", PC-1, opcodeBytes, instr.name == "???" ? "NOP" : instr.name, args);
+            std::print("{:04X}  {:9s} {} {:27s} ", PC-1, opcodeBytes, instr.name, args);
             std::print("A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} ", A, X, Y, P, SP);
-            std::println("PPU:{:3d},{:3d} CYC:{:d}", ppu1, ppu2, m_nTotCycles);
+            std::println("PPU:{:3d},{:3d} CYC:{:d}", scanline, dot, m_nTotCycles);
         }
 
         m_currAddrMode = instr.addrmode;
