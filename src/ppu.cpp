@@ -9,7 +9,7 @@
 
 static const uint16_t START_NAME_TABLES = 0x2000;
 static const uint16_t NAME_TABLE_SIZE = 0x400;
-static const uint16_t ATTR_TABLE_OFFSET = 0xC0;
+static const uint16_t ATTR_TABLE_OFFSET = 0x03C0;
     static const uint16_t START_PALETTE_RAM = 0x3F00;
 
     
@@ -21,7 +21,7 @@ void Ppu::reset()
 {
     memset(m_frameBuffer, 0x00, sizeof(m_frameBuffer));
     memset(m_internalRam, 0x00, sizeof(m_internalRam));
-    memset(m_paletteRam, 0x00, sizeof(m_paletteRam));
+    memset(m_paletteRam,  0x00, sizeof(m_paletteRam));
     
     m_registers[Register::PPUCTRL] = 0x00;
     m_registers[Register::PPUMASK] = 0x00;
@@ -123,16 +123,41 @@ void Ppu::fillDummyNameTable()
     static const int iNameTable = 0;
     uint16_t startNameTable = START_NAME_TABLES + iNameTable * NAME_TABLE_SIZE;
     
-    uint8_t ntEntry = 0x00;
-    for (uint8_t yTile=0; yTile < N_TILES_Y; yTile++)
+    // uint8_t ntEntry = 0x00;
+    // for (uint8_t yTile=0; yTile < N_TILES_Y; yTile++)
+    // {
+    //     for (uint8_t xTile=0; xTile < N_TILES_X; xTile++)
+    //     {
+    //         ntEntry = yTile * N_TILES_X + xTile;
+    //         //ntEntry = xTile * N_TILES_Y + yTile;
+    //         write(startNameTable + yTile*N_TILES_X + xTile, ntEntry);
+    //     }
+    // }
+
+    const uint8_t TILE_EMPTY   = 0x24;
+    const uint8_t TILE_DIGIT_0 = 0x00;
+    const uint8_t TILE_LADDER  = 0x3F;
+
+    uint8_t xTile;
+    uint8_t yTile;
+    uint8_t ntEntry = TILE_EMPTY;
+    for (yTile=0; yTile < N_TILES_Y; yTile++)
     {
-        for (uint8_t xTile=0; xTile < N_TILES_X; xTile++)
+        for (xTile=0; xTile < N_TILES_X; xTile++)
         {
-            ntEntry = yTile * N_TILES_X + xTile;
-            //ntEntry = xTile * N_TILES_Y + yTile;
             write(startNameTable + yTile*N_TILES_X + xTile, ntEntry);
         }
     }
+
+    xTile = 12;
+    yTile = 12;
+    ntEntry = TILE_DIGIT_0;
+    write(startNameTable + yTile*N_TILES_X + xTile, ntEntry);
+
+    xTile = 12;
+    yTile = 13;
+    ntEntry = TILE_LADDER;
+    write(startNameTable + yTile*N_TILES_X + xTile, ntEntry);
 
 
     uint16_t attrTableIndex =  0x00;    
@@ -207,8 +232,8 @@ void Ppu::testNameTables()
 
                     uint8_t pixel = (valuePlane2 << 1) + valuePlane1;
                     uint8_t colorIndex = read(START_PALETTE_RAM + paletteIndex + pixel);
-                    std::println("paletteIndex: {:02X}, pixel: {}, colorIndex: 0x{:02X}", 
-                        paletteIndex, pixel, colorIndex);
+                    // std::println("paletteIndex: {:02X}, pixel: {}, colorIndex: 0x{:02X}", 
+                    //    paletteIndex, pixel, colorIndex);
                     //m_frameBuffer[x*SCREEN_HEIGHT + y] = pixel * 10; //rough "palette indexing"
                     m_frameBuffer[x*SCREEN_HEIGHT + y] = colorIndex;
                     
