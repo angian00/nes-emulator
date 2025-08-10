@@ -49,6 +49,7 @@ public:
 
     void testNameTables();
     void fillDummyNameTable();
+    void dumpFrameBuffer();
 
 private:
     Bus* m_bus;
@@ -91,6 +92,4 @@ private:
 
     void renderPixel();
     void updateShiftRegisters();
-
-    void dumpFrameBuffer();
 };

@@ -21,6 +21,7 @@ void Ppu::reset()
 {
     memset(m_frameBuffer, 0x00, sizeof(m_frameBuffer));
     memset(m_internalRam, 0x00, sizeof(m_internalRam));
+    memset(m_paletteRam, 0x00, sizeof(m_paletteRam));
     
     m_registers[Register::PPUCTRL] = 0x00;
     m_registers[Register::PPUMASK] = 0x00;
@@ -50,6 +51,8 @@ uint8_t Ppu::read(uint16_t addr)
     if (addr >= 0x3F00)
     {
         //access palette ram
+        std::println("read access to palette RAM; addr={:04X}, value={:02X}", addr, m_paletteRam[(addr - 0x3F00) % PALETTE_RAM_SIZE]);
+
         return m_paletteRam[(addr - 0x3F00) % PALETTE_RAM_SIZE];
     }
 
@@ -132,28 +135,31 @@ void Ppu::fillDummyNameTable()
     }
 
 
-    uint16_t attrTableIndex =  0x00;
-    
-    //checkerboard pattern for palette switching
+    uint16_t attrTableIndex =  0x00;    
     for (int i = 0; i < 64; i++) {
-        uint8_t attrEntry = ( (i % 4) << 0 ) | ( ((i / 4) % 4) << 2 );
+        //uint8_t attrEntry = ( (i % 4) << 0 ) | ( ((i / 4) % 4) << 2 );
         //uint8_t attrEntry = 0b00011011;
-        write(startNameTable + ATTR_TABLE_OFFSET + attrTableIndex, attrEntry);
+        //uint8_t attrEntry = (i%4) * 4; //rotate over background palettes
+        uint8_t attrEntry = 0; //use palette 0x00 always
+        write(startNameTable + ATTR_TABLE_OFFSET + i, attrEntry);
     }
 
 
     uint8_t dummyPalette[32] = {
-        0x0F, 0x1F, 0x2F, 0x3F,  // background palette 0
-        0x0E, 0x1E, 0x2E, 0x3E,  // background palette 1
-        0x0D, 0x1D, 0x2D, 0x3D,  // background palette 2
-        0x0C, 0x1C, 0x2C, 0x3C,  // background palette 3
-        0x0B, 0x1B, 0x2B, 0x3B,  // sprite palette 0
-        0x0A, 0x1A, 0x2A, 0x3A,  // sprite palette 1
-        0x09, 0x19, 0x29, 0x39,  // sprite palette 2
-        0x08, 0x18, 0x28, 0x38,  // sprite palette 3
+        //initial palettes for Donkey Kong
+        //background palettes
+        0x0F, 0x15, 0x2C, 0x12,
+        0x0F, 0x27, 0x02, 0x17,
+        0x0F, 0x30, 0x36, 0x06,
+        0x0F, 0x30, 0x2C, 0x24,
+        //sprite palettes
+        0x0F, 0x02, 0x36, 0x16,
+        0x0F, 0x30, 0x27, 0x24,
+        0x0F, 0x16, 0x30, 0x37,
+        0x0F, 0x06, 0x27, 0x02,
     };
     for (int i = 0; i < 32; i++) {
-        write(START_PALETTE_RAM, dummyPalette[i]);
+        write(START_PALETTE_RAM + i, dummyPalette[i]);
     }
 }
 
@@ -200,8 +206,11 @@ void Ppu::testNameTables()
                     //std::println("setting pixel ({}, {})", x, y);
 
                     uint8_t pixel = (valuePlane2 << 1) + valuePlane1;
+                    uint8_t colorIndex = read(START_PALETTE_RAM + paletteIndex + pixel);
+                    std::println("paletteIndex: {:02X}, pixel: {}, colorIndex: 0x{:02X}", 
+                        paletteIndex, pixel, colorIndex);
                     //m_frameBuffer[x*SCREEN_HEIGHT + y] = pixel * 10; //rough "palette indexing"
-                    m_frameBuffer[x*SCREEN_HEIGHT + y] = paletteIndex*4 + pixel;
+                    m_frameBuffer[x*SCREEN_HEIGHT + y] = colorIndex;
                     
                 }
             }
@@ -219,7 +228,7 @@ void Ppu::dumpFrameBuffer()
     {
         for (auto y=0; y < SCREEN_HEIGHT; y++)
         {
-            std::print("({:01X})", m_frameBuffer[SCREEN_HEIGHT*x + y]);
+            std::print("{:01X}", m_frameBuffer[SCREEN_HEIGHT*x + y]);
         }
         std::println();
     }

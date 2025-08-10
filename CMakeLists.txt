@@ -23,7 +23,6 @@ set(MAIN_SOURCES
     src/cpu_addr_modes.cpp
     src/ppu.cpp
     src/bit_operations.cpp
-    src/palette.cpp
     src/display.cpp
     src/keyboard.cpp
     src/emulator.cpp
@@ -65,6 +64,12 @@ find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME}  ${SDL2_LIBRARIES})
 target_link_libraries(${VIEWER_EXE}  ${SDL2_LIBRARIES})
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/2C02G_wiki.pal
+                ${CMAKE_CURRENT_BINARY_DIR}/2C02G_wiki.pal)
 
 IF (WIN32)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

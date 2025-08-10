@@ -31,13 +31,20 @@ int main(int argc, char* argv[])
 
     
     Display* display = new Display();
-    auto sdlOk = display->initSdl();
-    if (!sdlOk) {
-        std::println("!! Error initializing SDL");
+    auto displayOk = display->initSystemPalette("2C02G_wiki.pal");
+    if (!displayOk) {
+        std::println("!! Error initializing system palette");
         display->shutdownSdl();
         return 1;
     }
     
+    displayOk = display->initSdl();
+    if (!displayOk) {
+        std::println("!! Error initializing SDL");
+        display->shutdownSdl();
+        return 1;
+    }
+
     Keyboard* keyboard = new Keyboard();
     
     
@@ -46,6 +53,7 @@ int main(int argc, char* argv[])
 
     bus->ppu()->fillDummyNameTable();
     bus->ppu()->testNameTables();
+    //bus->ppu()->dumpFrameBuffer();
 
     // Main loop
     bool running = true;
@@ -55,7 +63,7 @@ int main(int argc, char* argv[])
         // //PPU clock is 3x CPU clock
         // for (int i=0; i < 3; ++i)
         //     bus->ppu()->clock();
-                
+
 
         if (bus->ppu()->isFrameComplete()) {
             display->render(bus->ppu()->frameBuffer());

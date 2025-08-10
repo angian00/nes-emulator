@@ -1,10 +1,36 @@
 #include "display.hpp"
 
 #include "ppu.hpp"
-#include "palette.hpp"
 
 #include <print>
+#include <cstdio>
 
+
+
+bool Display::initSystemPalette(const char* palFile)
+{
+    FILE *f;
+    if (!(f = fopen(palFile, "rb")))
+    {
+        std::println("!! {} is not a readable file", palFile);
+        return false;
+    }
+
+    auto nRead = fread(m_systemPalette, sizeof(uint8_t), 64*3, f);    
+    fclose(f);
+
+    if (nRead != 64*3) {
+        std::println("!! not a valid palette file");
+        return false;
+    }
+
+    dumpSystemPaletteEntry(0x0F);
+    dumpSystemPaletteEntry(0x15);
+    dumpSystemPaletteEntry(0x2C);
+    dumpSystemPaletteEntry(0x12);
+
+    return true;
+}
 
 bool Display::initSdl()
 {
@@ -56,11 +82,10 @@ void Display::shutdownSdl()
         SDL_Quit();
 }
 
-
 void Display::clear()
 {
-    uint8_t* color = (uint8_t*)PALETTE_COLORS;
-    SDL_SetRenderDrawColor(renderer, color[0], color[1], color[2], color[3]);
+    uint8_t* clearColor = (uint8_t*)m_systemPalette;
+    SDL_SetRenderDrawColor(renderer, clearColor[0], clearColor[1], clearColor[2], 0xff);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 }
@@ -75,9 +100,8 @@ void Display::render(const uint8_t *pixels)
         for (auto y=0; y < Ppu::SCREEN_HEIGHT; y++)
         {
             uint8_t colorIndex = pixels[x*Ppu::SCREEN_HEIGHT + y];
-            uint8_t* color = PALETTE_COLORS + 4*colorIndex;
-            //uint8_t * color = PALETTE;
-            SDL_SetRenderDrawColor(renderer, color[0], color[1], color[2], color[3]);
+            uint8_t* color = m_systemPalette + 3*colorIndex;
+            SDL_SetRenderDrawColor(renderer, color[0], color[1], color[2], 0xff);
 
             SDL_Rect rect(x*SCALE_FACTOR, y*SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
             SDL_RenderFillRect(renderer, &rect);
@@ -92,4 +116,11 @@ void Display::refresh()
 {
     SDL_RenderPresent(renderer);
     SDL_RaiseWindow(window);
+}
+
+
+void Display::dumpSystemPaletteEntry(uint8_t paletteIndex)
+{
+    std::println("system palette entry 0x{:02X}: (0x{:02X}, 0x{:02X}, 0x{:02X})", paletteIndex, 
+        m_systemPalette[3*paletteIndex], m_systemPalette[3*paletteIndex+1], m_systemPalette[3*paletteIndex+2]);
 }
