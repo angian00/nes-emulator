@@ -10,7 +10,7 @@
 static const uint16_t START_NAME_TABLES = 0x2000;
 static const uint16_t NAME_TABLE_SIZE = 0x400;
 static const uint16_t ATTR_TABLE_OFFSET = 0x03C0;
-    static const uint16_t START_PALETTE_RAM = 0x3F00;
+static const uint16_t START_PALETTE_RAM = 0x3F00;
 
     
 static uint8_t N_TILES_X = 32;
@@ -33,9 +33,15 @@ void Ppu::reset()
     m_internalRegisterX = 0x00;
     m_internalRegisterW = 0x00;
 
+    m_patternShiftHi = 0x0000;
+    m_patternShiftLo = 0x0000;
+    m_attrShiftHi = 0x0000;
+    m_attrShiftLo = 0x0000;
+
     m_dot = 0;
-    m_scanline = 261;
-    // m_scanline = 0;
+    m_scanline = 0;
+    //m_dot = 1;
+    //m_scanline = 261;
     m_frameComplete = false;
     m_oddFrame = false;
 }
@@ -51,7 +57,7 @@ uint8_t Ppu::read(uint16_t addr)
     if (addr >= 0x3F00)
     {
         //access palette ram
-        std::println("read access to palette RAM; addr={:04X}, value={:02X}", addr, m_paletteRam[(addr - 0x3F00) % PALETTE_RAM_SIZE]);
+        //std::println("read access to palette RAM; addr={:04X}, value={:02X}", addr, m_paletteRam[(addr - 0x3F00) % PALETTE_RAM_SIZE]);
 
         return m_paletteRam[(addr - 0x3F00) % PALETTE_RAM_SIZE];
     }
@@ -102,19 +108,93 @@ bool Ppu::isPaletteAddress(uint16_t addr)
 
 uint8_t Ppu::readRegister(Register reg)
 {
-    return 0x00; //TODO
+    // side-effects on internal registers
+    // see https://www.nesdev.org/wiki/PPU_scrolling#Summary
+    if (reg == Register::PPUSTATUS)
+    {
+        m_internalRegisterW = 0x00;
+    }
+    else if (reg == Register::PPUDATA)
+    {
+        uint8_t value;
+
+        if (isPaletteAddress(m_internalRegisterV))
+            value = read(m_internalRegisterV);
+        else {
+            uint8_t value = m_ppuDataBuffer;
+            m_ppuDataBuffer = read(m_internalRegisterV);
+        }
+        
+        if (m_registers[Register::PPUCTRL] & 0x04)
+            m_internalRegisterV += 32;
+        else
+            m_internalRegisterV ++;
+
+        return value;
+    }
+
+    return m_registers[reg];
 }
 
 void Ppu::writeRegister(Register reg, uint8_t value)
 {
-    //TODO;
+    m_registers[reg] = value;
+
+    // side-effects on internal registers
+    // see https://www.nesdev.org/wiki/PPU_scrolling#Summary
+    if (reg == Register::PPUCTRL)
+    {
+        assignBits(&m_internalRegisterT, value, 10, 0, 2);
+    }
+    else if (reg == Register::PPUSCROLL)
+    {
+        if (m_internalRegisterW == 0x00)
+        {
+            //first write
+            assignBits(&m_internalRegisterT, value, 0, 3, 5);
+            m_internalRegisterX = value & 0x07;
+            m_internalRegisterW = 0x01;
+        }
+        else
+        {
+            //second write
+            assignBits(&m_internalRegisterT, value, 12, 0, 3);
+            assignBits(&m_internalRegisterT, value, 5, 3, 3);
+            assignBits(&m_internalRegisterT, value, 8, 6, 2);
+            m_internalRegisterW = 0x00;
+        }
+    }
+    else if (reg == Register::PPUADDR)
+    {
+        if (m_internalRegisterW == 0x00)
+        {
+            //first write
+            assignBits(&m_internalRegisterT, value, 8, 0, 6);
+            m_internalRegisterT &= ~(1 << 14); //clear Z bit            
+            m_internalRegisterW = 0x01;
+        }
+        else
+        {
+            //second write
+            assignBits(&m_internalRegisterT, value, 0, 0, 8);
+            m_internalRegisterV = m_internalRegisterT;
+            m_internalRegisterW = 0x00;
+        }
+    }
+    else if (reg == Register::PPUDATA)
+    {
+        write(m_internalRegisterV, value);
+        if (m_registers[Register::PPUCTRL] & 0x04)
+            m_internalRegisterV += 32;
+        else
+            m_internalRegisterV ++;
+    }
 }
 
 
 void Ppu::clock()
 {
-    testNameTables();
-    m_frameComplete = true;
+    fetchAndRender();
 }
 
 
@@ -136,6 +216,7 @@ void Ppu::fillDummyNameTable()
 
     const uint8_t TILE_EMPTY   = 0x24;
     const uint8_t TILE_DIGIT_0 = 0x00;
+    const uint8_t TILE_DIGIT_1 = 0x01;
     const uint8_t TILE_LADDER  = 0x3F;
 
     uint8_t xTile;
@@ -149,13 +230,13 @@ void Ppu::fillDummyNameTable()
         }
     }
 
-    xTile = 12;
-    yTile = 12;
+    xTile = 15;
+    yTile = 14;
     ntEntry = TILE_DIGIT_0;
     write(startNameTable + yTile*N_TILES_X + xTile, ntEntry);
 
-    xTile = 12;
-    yTile = 13;
+    xTile = 15;
+    yTile = 15;
     ntEntry = TILE_LADDER;
     write(startNameTable + yTile*N_TILES_X + xTile, ntEntry);
 
@@ -191,12 +272,17 @@ void Ppu::fillDummyNameTable()
 
 void Ppu::testNameTables()
 {
+    renderFullFrame();
+}
+
+void Ppu::renderFullFrame()
+{
     uint16_t attrTableIndex =  0x00;
 
     static const int iNameTable = 0;
     uint16_t startNameTable = START_NAME_TABLES + iNameTable * NAME_TABLE_SIZE;
 
-    std::println("testNameTables()");
+    std::println("renderFullFrame()");
 
     for (uint8_t yTile=0; yTile < N_TILES_Y; yTile++)
     {
@@ -211,8 +297,8 @@ void Ppu::testNameTables()
             //uint16_t ptOffset = ntEntry << 4; //"left" pattern table
             uint16_t ptOffset = 0x1000 + (ntEntry << 4); //"right" pattern table
             
-            uint8_t attrEntry = read(startNameTable + ATTR_TABLE_OFFSET +  (yTile / 4) * 8 + (xTile / 4));
-            std::println("attrEntry={:02X}", attrEntry);
+            uint8_t attrEntry = read(startNameTable + ATTR_TABLE_OFFSET + (yTile / 4) * 8 + (xTile / 4));
+            //std::println("attrEntry={:02X}", attrEntry);
             int attrShift = ((yTile % 4) / 2) * 2 + ((xTile % 4) / 2);
             uint8_t paletteIndex = (attrEntry  >> (attrShift  * 2)) & 0x03;
 
@@ -236,7 +322,6 @@ void Ppu::testNameTables()
                     //    paletteIndex, pixel, colorIndex);
                     //m_frameBuffer[x*SCREEN_HEIGHT + y] = pixel * 10; //rough "palette indexing"
                     m_frameBuffer[x*SCREEN_HEIGHT + y] = colorIndex;
-                    
                 }
             }
         }
@@ -253,7 +338,7 @@ void Ppu::dumpFrameBuffer()
     {
         for (auto y=0; y < SCREEN_HEIGHT; y++)
         {
-            std::print("{:01X}", m_frameBuffer[SCREEN_HEIGHT*x + y]);
+            std::print("{:02X} ", m_frameBuffer[SCREEN_HEIGHT*x + y]);
         }
         std::println();
     }

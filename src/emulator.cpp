@@ -1,9 +1,14 @@
 #include <print>
+#include <chrono>
 
 #include "cartridge.hpp"
 #include "display.hpp"
 #include "keyboard.hpp"
 #include "bus.hpp"
+
+
+const int targetFps = 60;
+const int frameDelay = 1000 / targetFps;
 
 
 int main(int argc, char* argv[])
@@ -49,7 +54,7 @@ int main(int argc, char* argv[])
     
     
     //bus->cpu()->setPC(0xC000); //automation mode
-    bus->cpu()->setTracing(true);
+    //bus->cpu()->setTracing(true);
 
     bus->ppu()->fillDummyNameTable();
     bus->ppu()->testNameTables();
@@ -57,17 +62,33 @@ int main(int argc, char* argv[])
 
     // Main loop
     bool running = true;
+    std::chrono::time_point<std::chrono::high_resolution_clock> frameStart, frameEnd;
+
     while (running) {
-        // bus->cpu()->clock();
+        frameStart = std::chrono::high_resolution_clock::now();
+
+        //bus->cpu()->clock();
 
         // //PPU clock is 3x CPU clock
-        // for (int i=0; i < 3; ++i)
-        //     bus->ppu()->clock();
+        for (int i=0; i < 3; ++i)
+            bus->ppu()->clock();
 
 
         if (bus->ppu()->isFrameComplete()) {
+            //bus->ppu()->dumpFrameBuffer();
             display->render(bus->ppu()->frameBuffer());
             bus->ppu()->clearFrameComplete();
+
+            frameEnd = std::chrono::high_resolution_clock::now();
+            auto frameTime = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd - frameStart).count();
+
+            std::println("rendered frame; frameTime={}", frameTime);
+
+            if (frameDelay > frameTime) {
+                //display->delay(frameDelay - frameTime);
+            }
+
+            frameStart = std::chrono::high_resolution_clock::now();
         }
 
         running = keyboard->handleEvents();

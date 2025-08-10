@@ -149,6 +149,10 @@ private:
 
     bool m_tracing = false;
 
+    //DEBUG PPU
+    uint8_t m_scrollX;
+    uint8_t m_scrollY;
+
     bool hasFlag(FlagIndex flagIndex);
     void setFlag(FlagIndex flagIndex, bool value);
 

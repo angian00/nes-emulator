@@ -311,55 +311,6 @@ void Ppu::clock()
 
 
 
-// void Ppu::testNameTables()
-// {
-//     uint16_t attrTableIndex =  0x00;
-
-//     static const int iNameTable = 0;
-//     uint16_t startNameTable = START_NAME_TABLES + iNameTable * NAME_TABLE_SIZE;
-
-//     std::println("testNameTables()");
-
-//     uint8_t attributes = read(startNameTable + ATTR_TABLE_OFFSET + attrTableIndex);
-//     std::println("attributes={:02X}", attributes);
-//     for (uint8_t xTile=0; xTile < wTiles; xTile++)
-//     {
-//         std::println("xTile loop: ({})", xTile);
-
-//         for (uint8_t yTile=0; yTile < hTiles; yTile++)
-//         {
-//             std::println("xTile, yTile loop: ({}, {})", xTile, yTile);
-
-//             //uint16_t ntEntry = cart->chrData(iChrBlock, startNameTable + yTile*hTiles + xTile);
-//             uint16_t ntEntry = read(startNameTable + xTile*wTiles + yTile);
-//             //uint8_t ntEntry = 0x00;
-//             if (ntEntry != 0x0000)
-//                 std::println("testNameTables; xTile={}, yTile={}; ntEntry={:04X}", xTile, yTile, ntEntry);
-
-//             uint16_t ptOffset = ntEntry << 4;
-
-//              //construct tile from pattern table data
-//             for (auto dy=0; dy < 8; dy++)
-//             {
-//                 uint8_t rowDataPlane1 = read(ptOffset + dy);
-//                 uint8_t rowDataPlane2 = read(ptOffset + dy + 8);
-
-//                 uint8_t y = 8*yTile + dy;
-//                 for (auto dx=0; dx < 8; dx++)
-//                 {
-//                     uint8_t x = 8*xTile + (8 - dx - 1);
-//                     uint8_t valuePlane1 = (rowDataPlane1 >> dx) & 0x1;
-//                     uint8_t valuePlane2 = (rowDataPlane2 >> dx) & 0x1;
-
-//                     std::println("setting pixel ({}, {})", x, y);
-
-//                     m_pixels[x*SCREEN_HEIGHT + y] = (valuePlane2 << 1) + valuePlane1;
-//                 }
-//             }
-//         }
-//     }
-// }
-
 uint16_t Ppu::ntDataOffset()
 {
     return (m_internalRegisterV & 0xFFF);

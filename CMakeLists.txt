@@ -22,6 +22,7 @@ set(MAIN_SOURCES
     src/cpu_opcodes.cpp
     src/cpu_addr_modes.cpp
     src/ppu.cpp
+    src/ppu_render.cpp
     src/bit_operations.cpp
     src/display.cpp
     src/keyboard.cpp

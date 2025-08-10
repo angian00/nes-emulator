@@ -1,0 +1,102 @@
+#include "cpu.hpp"
+
+#include "bus.hpp"
+#include "instructions.hpp"
+
+#include <print>
+
+
+
+bool isPageBreak(uint16_t addr1, uint16_t addr2)
+{
+    return ((addr1 & 0xff00) != (addr2 & 0xff00));
+}
+
+
+void Cpu::reset()
+{
+    A = 0x00;
+    X = 0x00;
+    Y = 0x00;
+    SP = 0xFD;     // offset to the start of the stack
+    PC = 0x0000;
+    P = 0x24; // IRQ disabled
+
+    uint16_t lo = m_bus->read(0xFFFC);
+    uint16_t hi = m_bus->read(0xFFFD);
+    PC = (hi << 8) | lo;
+    
+    //m_nWaitCycles = 8;
+    m_nWaitCycles = 7;
+    m_nProcessedInstr = 0;
+    m_nTotCycles = 0;
+}
+
+
+bool Cpu::hasFlag(FlagIndex flagIndex)
+{
+    return ((P >> flagIndex) & 0x1) == 1;
+}
+
+void Cpu::setFlag(FlagIndex flagIndex, bool value)
+{
+    uint8_t mask = (0x1 << flagIndex);
+    if (value)
+        P |= mask;
+    else
+        P &= ~mask;
+}
+    
+uint8_t Cpu::read(uint16_t addr)
+{
+    return m_bus->read(addr);
+}
+
+void Cpu::write(uint16_t addr, uint8_t value)
+{
+    m_bus->write(addr, value);
+}
+
+
+void Cpu::pushStack(uint8_t value)
+{
+    if (SP == 0x00)
+        throw std::runtime_error("stack overflow");
+
+    m_bus->write(STACK_START + (SP--), value);
+}
+
+uint8_t Cpu::popStack()
+{
+    if (SP == 0xFF)
+        throw std::runtime_error("stack underflow");
+
+    return m_bus->read(STACK_START + (++SP));
+}
+
+
+void Cpu::clock()
+{
+    if (m_nTotCycles == 0)
+    {
+        m_scrollX = 0x00;
+        m_bus->write(0x2005, m_scrollX);
+    }
+    else if (m_nTotCycles == 1)
+    {
+        m_scrollY = 0x00;
+        m_bus->write(0x2005, m_scrollY);
+    }
+    else
+    {
+        m_scrollX ++;
+
+        if (m_nTotCycles % 2 == 0)
+            m_bus->write(0x2005, m_scrollX);
+        else
+            m_bus->write(0x2005, m_scrollY);
+    }
+
+    m_nTotCycles++;
+}
+

@@ -75,21 +75,32 @@ private:
     uint16_t m_patternShiftLo;
     uint16_t m_attrShiftHi;
     uint16_t m_attrShiftLo;
-
+    
     //internal latches?
     uint8_t m_ntEntry;
     uint8_t m_attrEntry;
     uint8_t m_ppuDataBuffer;
 
+    //DEBUG
+    uint8_t m_paletteIndex;
+    void renderPixel(uint8_t dx);
+    //
+
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
     bool isPaletteAddress(uint16_t addr);
     
-    uint16_t ntDataOffset();
     uint8_t currentFineY();
+    uint8_t currentCoarseX();
+    uint8_t currentCoarseY();
+
     void incrementCoarseX();
     void incrementY();
 
+    void fetchAndRender();
+    void fetchTile();
     void renderPixel();
     void updateShiftRegisters();
+
+    void renderFullFrame();
 };
