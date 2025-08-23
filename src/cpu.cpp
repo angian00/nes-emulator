@@ -19,7 +19,6 @@ void Cpu::reset()
     X = 0x00;
     Y = 0x00;
     SP = 0xFD;     // offset to the start of the stack
-    PC = 0x0000;
     P = 0x24; // IRQ disabled
 
     uint16_t lo = m_bus->read(0xFFFC);

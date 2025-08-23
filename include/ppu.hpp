@@ -49,6 +49,7 @@ public:
 
     void testNameTables();
     void fillDummyNameTable();
+    void fillDummyPalette();
     void dumpFrameBuffer();
 
 private:
@@ -62,7 +63,7 @@ private:
 
     uint8_t m_frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT] = {};
 
-    uint8_t m_internalRam[INTERNAL_RAM_SIZE] = {};
+    uint8_t m_vram[INTERNAL_RAM_SIZE] = {};
     uint8_t m_paletteRam[PALETTE_RAM_SIZE] = {};
 
     uint16_t m_scanline;
@@ -98,6 +99,7 @@ private:
     void incrementY();
 
     void fetchAndRender();
+    void fetchAndRender__no();
     void fetchTile();
     void renderPixel();
     void updateShiftRegisters();

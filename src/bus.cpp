@@ -88,11 +88,11 @@ void Bus::write(uint16_t addr, uint8_t value)
 {
     if (addr >= 0x8000)
     {
-        throw std::runtime_error(std::format("Trying to write to read-only memory?; addr=0x{:02X}", addr));
+        throw std::runtime_error(std::format("Trying to write to read-only memory?; addr=0x{:04X}", addr));
     }
 
     if (addr >= 0x6000)
-        throw std::runtime_error(std::format("access to cartridge RAM area unimplemented; addr=0x{:02X}", addr));
+        throw std::runtime_error(std::format("access to cartridge RAM area unimplemented; addr=0x{:04X}", addr));
 
     if (addr >= 0x4000)
     {
@@ -105,6 +105,11 @@ void Bus::write(uint16_t addr, uint8_t value)
         //NES PPU registers
         m_ppu->writeRegister(mapPPURegister(addr), value);
         return;
+    }
+
+    if (addr >= 0x0100 && addr < 0x0200)
+    {
+        std::println("Writing on stack; addr=${:04X}, value=${:02X}", addr, value);
     }
 
     addr = mapInternalRam(addr);
@@ -137,9 +142,14 @@ Ppu::Register mapPPURegister(uint16_t addr)
 
 uint16_t mapCartridgeRom(uint16_t addr)
 {
-    // Mapper 0 (NROM) mirroring
-    if (addr >= 0xC000)
-        return addr - 0xC000;
-    else
-        return addr - 0x8000;
+    // // Mapper 0 (NROM) mirroring
+    // if (addr >= 0xC000)
+    //     return addr - 0xC000;
+    // else
+    //     return addr - 0x8000;
+
+    if (addr >= 0x8000)
+        addr = (addr - 0x8000) & 0x3FFF;
+
+    return addr;
 }

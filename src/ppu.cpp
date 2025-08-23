@@ -5,6 +5,7 @@
 
 #include <print>
 #include <cstring>
+#include <cassert>
 
 
 static const uint16_t START_NAME_TABLES = 0x2000;
@@ -20,7 +21,7 @@ static uint8_t N_TILES_Y = 30;
 void Ppu::reset()
 {
     memset(m_frameBuffer, 0x00, sizeof(m_frameBuffer));
-    memset(m_internalRam, 0x00, sizeof(m_internalRam));
+    memset(m_vram, 0x00, sizeof(m_vram));
     memset(m_paletteRam,  0x00, sizeof(m_paletteRam));
     
     m_registers[Register::PPUCTRL] = 0x00;
@@ -38,10 +39,10 @@ void Ppu::reset()
     m_attrShiftHi = 0x0000;
     m_attrShiftLo = 0x0000;
 
-    m_dot = 0;
-    m_scanline = 0;
-    //m_dot = 1;
-    //m_scanline = 261;
+    // m_dot = 0;
+    // m_scanline = 0;
+    m_dot = 1;
+    m_scanline = 261;
     m_frameComplete = false;
     m_oddFrame = false;
 }
@@ -49,10 +50,13 @@ void Ppu::reset()
 
 uint8_t Ppu::read(uint16_t addr)
 {
+    // addr &= 0x3FFF;
+
     if (addr >= 0x4000)
     {
         throw std::runtime_error(std::format("access to PPU memory out of bounds; addr=0x{:02X}", addr));
     }
+
 
     if (addr >= 0x3F00)
     {
@@ -64,9 +68,11 @@ uint8_t Ppu::read(uint16_t addr)
 
     if (addr >= 0x2000)
     {
-        //access bus internal ram
-        //std::println("ppu read: accessing bus internal ram");
-        return m_bus->read(addr - 0x2000);
+        //access internal vram
+        addr = addr - 0x2000;
+        assert(addr < INTERNAL_RAM_SIZE);
+
+        return m_vram[addr];
     }
 
     //access bus chr rom
@@ -75,10 +81,13 @@ uint8_t Ppu::read(uint16_t addr)
 
 void Ppu::write(uint16_t addr, uint8_t value)
 {
+    // addr &= 0x3FFF;
+
     if (addr >= 0x4000)
     {
         throw std::runtime_error(std::format("access to PPU memory out of bounds; addr=0x{:02X}", addr));
     }
+
 
     if (addr >= 0x3F00)
     {
@@ -91,8 +100,10 @@ void Ppu::write(uint16_t addr, uint8_t value)
 
     if (addr >= 0x2000)
     {
-        //access bus internal ram
-        m_bus->write(addr - 0x2000, value);
+        addr = addr - 0x2000;
+        assert(addr < INTERNAL_RAM_SIZE);
+
+        m_vram[addr] = value;
         return;
     }
 
@@ -166,16 +177,19 @@ void Ppu::writeRegister(Register reg, uint8_t value)
     }
     else if (reg == Register::PPUADDR)
     {
+        
         if (m_internalRegisterW == 0x00)
         {
             //first write
             assignBits(&m_internalRegisterT, value, 8, 0, 6);
+            std::println("writing to PPUADDR; first  write=${:02X}, t=${:04X}", value, m_internalRegisterT);
             m_internalRegisterT &= ~(1 << 14); //clear Z bit            
             m_internalRegisterW = 0x01;
         }
         else
         {
             //second write
+            std::println("writing to PPUADDR; second write=${:02X}, t=${:04X}", value, m_internalRegisterT);
             assignBits(&m_internalRegisterT, value, 0, 0, 8);
             m_internalRegisterV = m_internalRegisterT;
             m_internalRegisterW = 0x00;
@@ -183,11 +197,16 @@ void Ppu::writeRegister(Register reg, uint8_t value)
     }
     else if (reg == Register::PPUDATA)
     {
+        std::println("writing to PPUDATA; v=${:04X}, value=${:02X}", m_internalRegisterV, value);
         write(m_internalRegisterV, value);
         if (m_registers[Register::PPUCTRL] & 0x04)
             m_internalRegisterV += 32;
         else
             m_internalRegisterV ++;
+    }
+    else if (reg == Register::PPUMASK)
+    {
+        std::println("writing to PPUMASK; value=${:02X}", value);
     }
 }
 
@@ -249,8 +268,10 @@ void Ppu::fillDummyNameTable()
         uint8_t attrEntry = 0; //use palette 0x00 always
         write(startNameTable + ATTR_TABLE_OFFSET + i, attrEntry);
     }
+}
 
-
+void Ppu::fillDummyPalette()
+{
     uint8_t dummyPalette[32] = {
         //initial palettes for Donkey Kong
         //background palettes
@@ -264,6 +285,7 @@ void Ppu::fillDummyNameTable()
         0x0F, 0x16, 0x30, 0x37,
         0x0F, 0x06, 0x27, 0x02,
     };
+
     for (int i = 0; i < 32; i++) {
         write(START_PALETTE_RAM + i, dummyPalette[i]);
     }

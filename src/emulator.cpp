@@ -54,10 +54,11 @@ int main(int argc, char* argv[])
     
     
     //bus->cpu()->setPC(0xC000); //automation mode
-    //bus->cpu()->setTracing(true);
+    bus->cpu()->setTracing(true);
 
     bus->ppu()->fillDummyNameTable();
-    bus->ppu()->testNameTables();
+    //bus->ppu()->fillDummyPalette();
+    //bus->ppu()->testNameTables();
     //bus->ppu()->dumpFrameBuffer();
 
     // Main loop
@@ -67,7 +68,7 @@ int main(int argc, char* argv[])
     while (running) {
         frameStart = std::chrono::high_resolution_clock::now();
 
-        //bus->cpu()->clock();
+        bus->cpu()->clock();
 
         // //PPU clock is 3x CPU clock
         for (int i=0; i < 3; ++i)
@@ -82,7 +83,7 @@ int main(int argc, char* argv[])
             frameEnd = std::chrono::high_resolution_clock::now();
             auto frameTime = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd - frameStart).count();
 
-            std::println("rendered frame; frameTime={}", frameTime);
+            //std::println("rendered frame; frameTime={}", frameTime);
 
             if (frameDelay > frameTime) {
                 //display->delay(frameDelay - frameTime);

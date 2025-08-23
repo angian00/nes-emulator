@@ -372,7 +372,7 @@ uint8_t Cpu::OpJMP()
 uint8_t Cpu::OpJSR()
 {
     PC = PC - 1;
-    pushStack((PC >> 8)& 0xff);
+    pushStack(PC >> 8);
     pushStack(PC & 0xff);
     PC = m_targetAddress;
     return 0x00;

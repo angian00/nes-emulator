@@ -24,10 +24,10 @@ bool Display::initSystemPalette(const char* palFile)
         return false;
     }
 
-    dumpSystemPaletteEntry(0x0F);
-    dumpSystemPaletteEntry(0x15);
-    dumpSystemPaletteEntry(0x2C);
-    dumpSystemPaletteEntry(0x12);
+    // dumpSystemPaletteEntry(0x0F);
+    // dumpSystemPaletteEntry(0x15);
+    // dumpSystemPaletteEntry(0x2C);
+    // dumpSystemPaletteEntry(0x12);
 
     return true;
 }
