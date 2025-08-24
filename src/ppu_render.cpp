@@ -126,8 +126,8 @@ void Ppu::fetchAndRender()
     {
         m_registers[Register::PPUSTATUS] |= (1 << StatusFlag::VBlank);
 
-        // if (control.generateNMI)
-        //     m_bus->cpu()->requestNMI(); //TODO
+        if (m_registers[Register::PPUCTRL] & 0x80)
+            m_bus->cpu()->requestNMI();
     }
 
 
@@ -313,6 +313,7 @@ void Ppu::renderPixel(uint8_t dx)
     //std::println("renderPixel({}, {}); offset={}", m_dot, m_scanline, offset);
     //std::println("renderPixel({}, {}); pixel={:02X}, colorIndex={}", m_dot, m_scanline, pixel, colorIndex);
     assert(offset >= 0 && offset < SCREEN_HEIGHT*SCREEN_WIDTH);
+
     m_frameBuffer[offset] = colorIndex;
 }
 

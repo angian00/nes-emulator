@@ -87,18 +87,15 @@ uint8_t Ppu::read(uint16_t addr)
 
 void Ppu::write(uint16_t addr, uint8_t value)
 {
-    // addr &= 0x3FFF;
-
     if (addr >= 0x4000)
     {
-        throw std::runtime_error(std::format("access to PPU memory out of bounds; addr=0x{:02X}", addr));
+        throw std::runtime_error(std::format("access to PPU memory out of bounds; addr=${:04X}", addr));
     }
-
 
     if (addr >= 0x3F00)
     {
         //access palette ram
-        std::println("write access to palette RAM; addr={:04X}, value={:02X}", addr, value);
+        std::println("writing to palette RAM; addr=${:04X}, value=${:02X}", addr, value);
         //TODO: peculiar behaviour where palette index is shared between background and sprites
         m_paletteRam[(addr - 0x3F00) % PALETTE_RAM_SIZE] = value;
         return;
@@ -107,14 +104,18 @@ void Ppu::write(uint16_t addr, uint8_t value)
     if (addr >= 0x2000)
     {
         addr = addr - 0x2000;
+        if (addr > 0x1000)
+            addr = addr - 0x1000;
+            
         assert(addr < INTERNAL_RAM_SIZE);
 
+        std::println("writing to VRAM; addr=${:04X}, value=${:02X}", addr, value);
         m_vram[addr] = value;
         return;
     }
 
     //access bus chr rom
-    throw std::runtime_error("invalid write access to ROM");
+    throw std::runtime_error("error: writing to ROM");
 }
 
 bool Ppu::isPaletteAddress(uint16_t addr)
@@ -161,10 +162,12 @@ void Ppu::writeRegister(Register reg, uint8_t value)
     // see https://www.nesdev.org/wiki/PPU_scrolling#Summary
     if (reg == Register::PPUCTRL)
     {
+        std::println("writing to PPUCTRL; value=${:02X}", value);
         assignBits(&m_internalRegisterT, value, 10, 0, 2);
     }
     else if (reg == Register::PPUSCROLL)
     {
+        std::println("writing to PPUSCROLL; value=${:02X}", value);
         if (m_internalRegisterW == 0x00)
         {
             //first write
@@ -183,7 +186,6 @@ void Ppu::writeRegister(Register reg, uint8_t value)
     }
     else if (reg == Register::PPUADDR)
     {
-        
         if (m_internalRegisterW == 0x00)
         {
             //first write
@@ -373,3 +375,18 @@ void Ppu::dumpFrameBuffer()
     std::println();
 }
 
+void Ppu::dumpNameTable() {
+    std::print("Nametable contents: ");
+    for (int i = 0; i < 32; i++) {
+        std::print("{:02X} ", read(START_NAME_TABLES + i));
+    }
+    std::println(" ...");
+}
+
+void Ppu::dumpPalette() {
+    std::print("Palette contents: ");
+    for (int i = 0; i < 32; i++) {
+        std::print("{:02X} ", read(START_PALETTE_RAM + i));
+    }
+    std::println();
+}

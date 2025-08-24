@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     Keyboard* keyboard = new Keyboard();
     
     
-    bus->cpu()->setTracing(true);
+    //bus->cpu()->setTracing(true);
 
     //bus->ppu()->fillDummyNameTable();
     //bus->ppu()->fillDummyPalette();
@@ -77,13 +77,16 @@ int main(int argc, char* argv[])
 
         if (bus->ppu()->isFrameComplete()) {
             //bus->ppu()->dumpFrameBuffer();
+            //bus->ppu()->dumpNameTable();
+            //bus->ppu()->dumpPalette();
+
             display->render(bus->ppu()->frameBuffer());
             bus->ppu()->clearFrameComplete();
 
             frameEnd = std::chrono::high_resolution_clock::now();
             auto frameTime = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd - frameStart).count();
 
-            //std::println("rendered frame; frameTime={}", frameTime);
+            std::println("rendered frame; frameTime={}", frameTime);
 
             if (frameDelay > frameTime) {
                 //display->delay(frameDelay - frameTime);

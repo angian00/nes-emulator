@@ -34,7 +34,7 @@ public:
     static const uint16_t INTERNAL_RAM_SIZE = 0x1000;
     static const uint16_t PALETTE_RAM_SIZE = 0x20;
 
-    Ppu() {  };
+    Ppu() { };
     uint16_t dot() { return m_dot; }
     uint16_t scanline() { return m_scanline; }
     const uint8_t *frameBuffer() { return m_frameBuffer; }
@@ -50,7 +50,10 @@ public:
     void testNameTables();
     void fillDummyNameTable();
     void fillDummyPalette();
+    
     void dumpFrameBuffer();
+    void dumpNameTable();
+    void dumpPalette();
 
 private:
     Bus* m_bus;
@@ -105,4 +108,5 @@ private:
     void updateShiftRegisters();
 
     void renderFullFrame();
+
 };

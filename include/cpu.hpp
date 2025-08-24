@@ -45,6 +45,7 @@ public:
     void connect(Bus* bus) { m_bus = bus; }
     void reset(bool isAutoTest);
     void clock();
+    void requestNMI();
     
     //addressing modes
     uint8_t AddrABS();
@@ -141,6 +142,8 @@ private:
     uint8_t   P;  // Processor status
     
     // other state
+    bool m_nmiPending;
+    
     uint8_t m_nWaitCycles;
     uint16_t m_targetAddress;
     uint32_t m_nProcessedInstr;
@@ -163,4 +166,7 @@ private:
     uint8_t popStack();
 
     void logInstruction(uint16_t pc);
+
+    void executeNMI();
+
 };

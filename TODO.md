@@ -1,4 +1,7 @@
 # TODO
-- stampare in trace valori dot, scanline
-- implementare extended opcodes
-+ calcolo fps
+- fix palette/attr table
+- schermata iniziale mancante
+- CHR bank switch (PPUCTRL bit 4)
++ display fps
++ input tasti
+

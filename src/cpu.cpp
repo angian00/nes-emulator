@@ -22,6 +22,8 @@ void Cpu::reset(bool isAutoTest)
 
     P = 0x24; // IRQ disabled
 
+    m_nmiPending = false;
+
     if (isAutoTest)
         PC = 0xC000;
     else
@@ -80,11 +82,31 @@ uint8_t Cpu::popStack()
 }
 
 
+void Cpu::requestNMI()
+{
+    m_nmiPending = true;
+}
+
+void Cpu::executeNMI()
+{
+    std::println("NMI occurred");
+
+    m_nmiPending = false;
+    pushStack(PC >> 8);
+    pushStack(PC & 0xFF);
+    pushStack(P & ~0x10);
+
+    P |= 0x04;
+    PC = read(0xFFFA) + (read(0xFFFB) << 8);
+}
+
 void Cpu::clock()
 {
     //std::println("Cpu::clock()");
-
     if (m_nWaitCycles == 0) {
+        if (m_nmiPending)
+            executeNMI();
+        
         m_nProcessedInstr ++;
         auto startPC = PC;
         auto opcode = read(PC++);
@@ -100,7 +122,6 @@ void Cpu::clock()
         uint8_t extraCycles1 = (this->*instr.addrmode)();
         uint8_t extraCycles2 = (this->*instr.operate)();  
         m_nWaitCycles += extraCycles1 & extraCycles2;
-
     }
 
     m_nWaitCycles--;
