@@ -32,7 +32,8 @@ int main(int argc, char* argv[])
 
     auto bus = new Bus();
     bus->insertCartridge(cart);
-    bus->reset();
+    //bus->reset(true);
+    bus->reset(false);
 
     
     Display* display = new Display();
@@ -53,10 +54,9 @@ int main(int argc, char* argv[])
     Keyboard* keyboard = new Keyboard();
     
     
-    //bus->cpu()->setPC(0xC000); //automation mode
     bus->cpu()->setTracing(true);
 
-    bus->ppu()->fillDummyNameTable();
+    //bus->ppu()->fillDummyNameTable();
     //bus->ppu()->fillDummyPalette();
     //bus->ppu()->testNameTables();
     //bus->ppu()->dumpFrameBuffer();

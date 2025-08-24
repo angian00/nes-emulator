@@ -43,7 +43,7 @@ public:
     void setPC(uint16_t value) { PC = value; }
 
     void connect(Bus* bus) { m_bus = bus; }
-    void reset();
+    void reset(bool isAutoTest);
     void clock();
     
     //addressing modes
@@ -161,4 +161,6 @@ private:
     void write(uint16_t addr, uint8_t value);
     void pushStack(uint8_t value);
     uint8_t popStack();
+
+    void logInstruction(uint16_t pc);
 };

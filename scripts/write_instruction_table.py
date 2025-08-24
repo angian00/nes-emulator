@@ -12,6 +12,7 @@ def main():
         mode_str = line[:14].strip()
         mnemonic  = line[14:17]
         hex = line[28:31]
+        n_bytes = line[33:34]
         n_cycles = line[37:38]
         #print(mode, hex, n_cycles)
         #print(mode_str, mnemonic)
@@ -47,21 +48,7 @@ def main():
         
         #"instructionLookupTable[0x10] = { "BPL", &Cpu::OpBPL, &Cpu::AddrREL, 2 };"
         #instructionLookupTable[0x10] = { "BPL", &Cpu::OpBPL, &Cpu::AddrREL, 2 };
-        print(f"instructionLookupTable[0x{hex[1:]}] = {{ \"{mnemonic}\", &Cpu::Op{mnemonic}, &Cpu::Addr{addr_mode}, {n_cycles} }};")
-
-# Absolute
-# Absolute,X
-# Absolute,Y
-# Accumulator
-# Immediate
-# Implied
-# Indirect
-# Indirect,X
-# Indirect,Y
-# Relative
-# Zero Page
-# Zero Page,X
-# Zero Page,Y
+        print(f"instructionLookupTable[0x{hex[1:]}] = {{ \"{mnemonic}\", &Cpu::Op{mnemonic}, &Cpu::Addr{addr_mode}, {n_bytes}, {n_cycles} }};")
 
 
 

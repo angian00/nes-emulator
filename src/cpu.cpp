@@ -13,18 +13,24 @@ bool isPageBreak(uint16_t addr1, uint16_t addr2)
 }
 
 
-void Cpu::reset()
+void Cpu::reset(bool isAutoTest)
 {
     A = 0x00;
     X = 0x00;
     Y = 0x00;
     SP = 0xFD;     // offset to the start of the stack
+
     P = 0x24; // IRQ disabled
 
-    uint16_t lo = m_bus->read(0xFFFC);
-    uint16_t hi = m_bus->read(0xFFFD);
-    PC = (hi << 8) | lo;
-    
+    if (isAutoTest)
+        PC = 0xC000;
+    else
+    {
+        uint16_t lo = m_bus->read(0xFFFC);
+        uint16_t hi = m_bus->read(0xFFFD);
+        PC = (hi << 8) | lo;
+    }
+
     //m_nWaitCycles = 8;
     m_nWaitCycles = 7;
     m_nProcessedInstr = 0;
@@ -80,31 +86,75 @@ void Cpu::clock()
 
     if (m_nWaitCycles == 0) {
         m_nProcessedInstr ++;
+        auto startPC = PC;
         auto opcode = read(PC++);
 
         Instruction& instr = instructionLookupTable[opcode];
         m_nWaitCycles = instr.nCycles;
 
         if (m_tracing) {
-//            std::println("[{:04d}] PC: ${:04X}  opcode: 0x{:02X} {}   SP: 0x{:02X}   A: 0x{:02X} X: 0x{:02X} Y: 0x{:02X} P: 0x{:02X} ", m_nProcessedInstr, PC-1, opcode, instr.name, SP, A, X, Y, P);
-            //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
-            std::string opcodeBytes = "";
-            std::string args = "";
-            uint16_t scanline = m_bus->ppu()->scanline();
-            uint16_t dot = m_bus->ppu()->dot();
-            //std::print("{:04X}  {:9s} {} {:27s} ", PC-1, opcodeBytes, instr.name == "???" ? "NOP" : instr.name, args);
-            std::print("{:04X}  {:9s} {} {:27s} ", PC-1, opcodeBytes, instr.name, args);
-            std::print("A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} ", A, X, Y, P, SP);
-            std::println("PPU:{:3d},{:3d} CYC:{:d}", scanline, dot, m_nTotCycles);
+            logInstruction(startPC);
         }
 
         m_currAddrMode = instr.addrmode;
         uint8_t extraCycles1 = (this->*instr.addrmode)();
         uint8_t extraCycles2 = (this->*instr.operate)();  
         m_nWaitCycles += extraCycles1 & extraCycles2;
+
     }
 
     m_nWaitCycles--;
     m_nTotCycles++;
+}
+
+
+void Cpu::logInstruction(uint16_t pc)
+{
+        auto opcode = read(pc);
+        Instruction& instr = instructionLookupTable[opcode];
+
+        //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
+        std::string opcodeBytes;
+        if (instr.nBytes == 1)
+            opcodeBytes = std::format("{:02X}", read(pc));
+        else if (instr.nBytes == 2)
+            opcodeBytes = std::format("{:02X} {:02X}", read(pc), read(pc+1));
+        else if (instr.nBytes == 3)
+            opcodeBytes = std::format("{:02X} {:02X} {:02X}", read(pc), read(pc+1), read(pc+2));
+
+        std::string args;
+        if (instr.addrmode == &Cpu::AddrABS)
+           args = std::format("${:04X}", (read(pc+2)<<8) + read(pc+1));
+        if (instr.addrmode == &Cpu::AddrABS)
+           args = std::format("${:04X}", (read(pc+2)<<8) + read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrABX)
+           args = std::format("${:04X},X", (read(pc+2)<<8) + read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrABY)
+           args = std::format("${:04X},Y", (read(pc+2)<<8) + read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrZP0)
+           args = std::format("${:02X}", read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrZPX)
+           args = std::format("${:02X},X", read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrZPY)
+           args = std::format("${:02X},Y", read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrIZX)
+           args = std::format("(${:02X},X)", read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrIZY)
+           args = std::format("(${:02X}),Y", read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrIMM)
+           args = std::format("#${:02X}", read(pc+1));
+        else if (instr.addrmode == &Cpu::AddrACC)
+           args = std::format("A");
+        else if (instr.addrmode == &Cpu::AddrREL || instr.addrmode == &Cpu::AddrIND)
+           args = std::format("${:04X}", m_targetAddress);
+
+        else
+            args = "";
+
+
+        std::print("{:04X}  {:9s} {} {:27s} ", pc, opcodeBytes, instr.name, args);
+        std::print("A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} ", A, X, Y, P, SP);
+        std::println("PPU:{:3d},{:3d} CYC:{:d}", m_bus->ppu()->scanline(), m_bus->ppu()->dot(), 
+                    m_nTotCycles);
 }
 

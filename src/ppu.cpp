@@ -18,7 +18,7 @@ static uint8_t N_TILES_X = 32;
 static uint8_t N_TILES_Y = 30;
 
 
-void Ppu::reset()
+void Ppu::reset(bool isAutoTest)
 {
     memset(m_frameBuffer, 0x00, sizeof(m_frameBuffer));
     memset(m_vram, 0x00, sizeof(m_vram));
@@ -39,10 +39,16 @@ void Ppu::reset()
     m_attrShiftHi = 0x0000;
     m_attrShiftLo = 0x0000;
 
-    // m_dot = 0;
-    // m_scanline = 0;
-    m_dot = 1;
-    m_scanline = 261;
+    if (isAutoTest)
+    {
+        m_dot = 21;
+        m_scanline = 0;
+    }
+    else
+    {
+        m_dot = 1;
+        m_scanline = 261;
+    }
     m_frameComplete = false;
     m_oddFrame = false;
 }

@@ -121,7 +121,6 @@ Absolute      STX $4400     $8E  3   4
 Zero Page     STY $44       $84  2   3
 Zero Page,X   STY $44,X     $94  2   4
 Absolute      STY $4400     $8C  3   4
-
 Relative      BPL $xx       $10  2   2
 Relative      BMI $xx       $30  2   2
 Relative      BVC $xx       $50  2   2
@@ -130,7 +129,6 @@ Relative      BCC $xx       $90  2   2
 Relative      BCS $xx       $B0  2   2
 Relative      BNE $xx       $D0  2   2
 Relative      BEQ $xx       $F0  2   2
-
 Implied       CLC           $18  1   2
 Implied       SEC           $38  1   2
 Implied       CLI           $58  1   2
@@ -138,7 +136,6 @@ Implied       SEI           $78  1   2
 Implied       CLV           $B8  1   2
 Implied       CLD           $D8  1   2
 Implied       SED           $F8  1   2
-
 Implied       TAX           $AA  1   2
 Implied       TXA           $8A  1   2
 Implied       DEX           $CA  1   2
@@ -147,7 +144,6 @@ Implied       TAY           $A8  1   2
 Implied       TYA           $98  1   2
 Implied       DEY           $88  1   2
 Implied       INY           $C8  1   2
-
 Implied       TXS           $9A  1   2
 Implied       TSX           $BA  1   2
 Implied       PHA           $48  1   3
@@ -155,6 +151,8 @@ Implied       PLA           $68  1   4
 Implied       PHP           $08  1   3
 Implied       PLP           $28  1   4
 
+#unofficial
+Immediate     SBC #$44      $EB  2   2
 
 #illegal opcodes (NMOS)
 Immediate     ALR #$44      $4B  2   2
@@ -169,13 +167,13 @@ Absolute,X    DCP $4400,X   $DF  3   7
 Absolute,Y    DCP $4400,Y   $DB  3   7
 Indirect,X    DCP ($44,X)   $C3  2   8
 Indirect,Y    DCP ($44),Y   $D3  2   8
-Zero Page     ISC $44       $E7  2   5
-Zero Page,X   ISC $4400,X   $F7  2   6
-Absolute      ISC $44       $EF  3   6
-Absolute,X    ISC $4400,X   $FF  3   7
-Absolute,Y    ISC $4400,Y   $FB  3   7
-Indirect,X    ISC ($44,X)   $E3  2   8
-Indirect,Y    ISC ($44),Y   $F3  2   8
+Zero Page     ISB $44       $E7  2   5
+Zero Page,X   ISB $4400,X   $F7  2   6
+Absolute      ISB $44       $EF  3   6
+Absolute,X    ISB $4400,X   $FF  3   7
+Absolute,Y    ISB $4400,Y   $FB  3   7
+Indirect,X    ISB ($44,X)   $E3  2   8
+Indirect,Y    ISB ($44),Y   $F3  2   8
 Absolute,Y    LAS $4400,Y   $BB  3   4
 Zero Page     LAX $44       $A7  2   3
 Zero Page,Y   LAX $4400,Y   $B7  2   4

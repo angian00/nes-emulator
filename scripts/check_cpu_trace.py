@@ -11,12 +11,13 @@ def main():
         ref_lines = f.readlines()
     
     i_log = 0
-    while i_log < len(log_lines) and log_lines[i_log][4:16] != " "*12:
+    while i_log < len(log_lines) and len(log_lines[i_log]) <= 32:
         i_log = i_log + 1
 
     i_ref = 0
 
     n_lines = min(len(log_lines) - i_log, len(ref_lines))
+    print()
 
     while i_ref < n_lines:
         ref_line = ref_lines[i_ref]

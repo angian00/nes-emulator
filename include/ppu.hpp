@@ -31,7 +31,7 @@ public:
 
     static const int SCREEN_WIDTH  = 256;
     static const int SCREEN_HEIGHT = 240;
-    static const uint16_t INTERNAL_RAM_SIZE = 0x800;
+    static const uint16_t INTERNAL_RAM_SIZE = 0x1000;
     static const uint16_t PALETTE_RAM_SIZE = 0x20;
 
     Ppu() {  };
@@ -42,7 +42,7 @@ public:
     void writeRegister(Register reg, uint8_t value);
 
     void connect(Bus* bus) { m_bus = bus; }
-    void reset();
+    void reset(bool isAutoTest);
     void clock();
     bool isFrameComplete() { return m_frameComplete; }
     void clearFrameComplete() { m_frameComplete = false; }

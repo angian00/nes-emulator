@@ -48,10 +48,10 @@ void Bus::insertCartridge(Cartridge* cart)
     m_cart = cart;
 }
 
-void Bus::reset()
+void Bus::reset(bool isAutoTest)
 {
-    m_cpu->reset();
-    m_ppu->reset();
+    m_cpu->reset(isAutoTest);
+    m_ppu->reset(isAutoTest);
 }
 
 
@@ -109,7 +109,7 @@ void Bus::write(uint16_t addr, uint8_t value)
 
     if (addr >= 0x0100 && addr < 0x0200)
     {
-        std::println("Writing on stack; addr=${:04X}, value=${:02X}", addr, value);
+        //std::println("Writing on stack; addr=${:04X}, value=${:02X}", addr, value);
     }
 
     addr = mapInternalRam(addr);
