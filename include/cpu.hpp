@@ -29,6 +29,16 @@ enum FlagIndex {
 };
 
 
+enum OAMState
+{
+    READ,
+    WRITE,
+    INACTIVE
+};
+
+static const int N_OAMDMA_VALUES = 256;
+
+
 bool isPageBreak(uint16_t addr1, uint16_t addr2);
 
 class Cpu
@@ -156,6 +166,12 @@ private:
     uint8_t m_scrollX;
     uint8_t m_scrollY;
 
+    //OAM
+    OAMState m_oamState;
+    uint8_t m_currOAMValue;
+    uint16_t m_nextOAMAddr;
+    int m_nOAMPerformed;
+
     bool hasFlag(FlagIndex flagIndex);
     void setFlag(FlagIndex flagIndex, bool value);
 
@@ -167,6 +183,7 @@ private:
 
     void logInstruction(uint16_t pc);
 
+    void startOAMDMA(uint16_t startAddr);
     void executeNMI();
 
 };

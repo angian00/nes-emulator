@@ -6,7 +6,6 @@
 #include <print>
 
 
-
 bool isPageBreak(uint16_t addr1, uint16_t addr2)
 {
     return ((addr1 & 0xff00) != (addr2 & 0xff00));
@@ -37,6 +36,8 @@ void Cpu::reset(bool isAutoTest)
     m_nWaitCycles = 7;
     m_nProcessedInstr = 0;
     m_nTotCycles = 0;
+
+    m_oamState = OAMState::INACTIVE;
 }
 
 
@@ -61,6 +62,13 @@ uint8_t Cpu::read(uint16_t addr)
 
 void Cpu::write(uint16_t addr, uint8_t value)
 {
+    if (addr == 0x4014)
+    {
+        std::println("writing to OAMDMA; value=${:02X}", value);
+        startOAMDMA(value << 8);
+        return;
+    }
+        
     m_bus->write(addr, value);
 }
 
@@ -100,8 +108,29 @@ void Cpu::executeNMI()
     PC = read(0xFFFA) + (read(0xFFFB) << 8);
 }
 
+
 void Cpu::clock()
 {
+    if (m_oamState == OAMState::READ)
+    {
+        m_currOAMValue = read(m_nextOAMAddr++);
+        m_oamState = OAMState::WRITE;
+        return;
+    }
+    
+    if (m_oamState == OAMState::WRITE)
+    {
+        //write on OAMDATA PPU register
+        m_bus->write(0x2004, m_currOAMValue);
+
+        m_nOAMPerformed ++;
+        if (m_nOAMPerformed == N_OAMDMA_VALUES)
+            m_oamState = OAMState::INACTIVE;
+        else
+            m_oamState = OAMState::READ;
+        return;
+    }
+
     //std::println("Cpu::clock()");
     if (m_nWaitCycles == 0) {
         if (m_nmiPending)
@@ -128,6 +157,12 @@ void Cpu::clock()
     m_nTotCycles++;
 }
 
+void Cpu::startOAMDMA(uint16_t startAddr)
+{
+    m_nextOAMAddr = startAddr;
+    m_oamState = OAMState::READ;
+    m_nOAMPerformed = 0;
+}
 
 void Cpu::logInstruction(uint16_t pc)
 {

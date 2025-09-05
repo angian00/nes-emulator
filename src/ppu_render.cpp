@@ -82,7 +82,11 @@ void Ppu::fetchAndRender()
                 case 3:
                 {
                     //AT (first)
-                    //TODO
+                    uint8_t atEntry = read(startNameTable + ATTR_TABLE_OFFSET + (yTile / 4) * 8 + (xTile / 4));
+                    uint8_t atTileBits = atEntry  >> (((yTile % 4) / 2) * 2 + ((xTile % 4) / 2) * 2) & 0x03;
+                    memset(&m_attrShiftHi, atTileBits >> 1, sizeof(m_attrShiftHi));
+                    memset(&m_attrShiftLo, atTileBits & 0x01, sizeof(m_attrShiftLo));
+
                     break;
                 }
                 case 4:
@@ -305,6 +309,10 @@ void Ppu::renderPixel(uint8_t dx)
     //uint8_t paletteIndex = attr & 0x03; //TODO
     //uint8_t paletteIndex = 0x00; //TODO: check attr processing
 
+    uint8_t attrLo = (m_attrShiftLo >> (7 - dx)) & 0x1;
+    uint8_t attrHi = (m_attrShiftHi >> (7 - dx)) & 0x1;
+    uint8_t m_paletteIndex = (attrHi << 1) | attrLo;
+
     uint8_t colorIndex = read(START_PALETTE_RAM + m_paletteIndex + pixel);
 
     //uint16_t curr_dot, curr_scanline;
@@ -324,4 +332,17 @@ void Ppu::updateShiftRegisters()
     m_patternShiftLo <<= 1;
     m_attrShiftHi <<= 1;
     m_attrShiftLo <<= 1;
+}
+
+void Ppu::renderOAMs()
+{
+    for (int iOAM=0; iOAM < 64; iOAM++)
+    {
+        uint8_t y    = m_oamData[iOAM*4 + 0];
+        uint8_t tile = m_oamData[iOAM*4 + 1];
+        uint8_t attr = m_oamData[iOAM*4 + 2];
+        uint8_t x    = m_oamData[iOAM*4 + 3];
+
+        uint8_t paletteIndex = 4 + (attr & 0b11);
+    }
 }

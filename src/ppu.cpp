@@ -139,7 +139,7 @@ uint8_t Ppu::readRegister(Register reg)
         if (isPaletteAddress(m_internalRegisterV))
             value = read(m_internalRegisterV);
         else {
-            uint8_t value = m_ppuDataBuffer;
+            value = m_ppuDataBuffer;
             m_ppuDataBuffer = read(m_internalRegisterV);
         }
         
@@ -215,6 +215,16 @@ void Ppu::writeRegister(Register reg, uint8_t value)
     else if (reg == Register::PPUMASK)
     {
         std::println("writing to PPUMASK; value=${:02X}", value);
+    }
+    else if (reg == Register::OAMADDR)
+    {
+        std::println("writing to OAMADDR; value=${:02X}", value);
+    }
+    else if (reg == Register::OAMDATA)
+    {
+        std::println("writing to OAMDATA; value=${:02X}", value);
+        m_oamData[m_registers[Register::OAMADDR]] = value;
+        m_registers[Register::OAMADDR] ++;
     }
 }
 

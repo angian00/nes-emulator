@@ -85,9 +85,12 @@ private:
     uint8_t m_attrEntry;
     uint8_t m_ppuDataBuffer;
 
+    uint8_t m_oamData[64*4];
+
     //DEBUG
     uint8_t m_paletteIndex;
     void renderPixel(uint8_t dx);
+    void renderOAMs();
     //
 
     uint8_t read(uint16_t addr);
